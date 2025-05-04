@@ -156,15 +156,21 @@
   <div class="tooltip" id="tooltip"></div>
 
   <!-- SNSシェアボタン -->
-  <div>
-    <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2F87sarahk3.github.io%2Fytym-%2F" target="_blank">
-      <button>Twitterでシェア</button>
+  <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+    <a href="https://twitter.com/intent/tweet?text=ytym年表を見てみて！&url=https%3A%2F%2F87sarahk3.github.io%2Fytym-/" target="_blank" rel="noopener noreferrer">
+      <button style="padding: 10px 15px; background-color: #1DA1F2; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        Twitterでシェア
+      </button>
     </a>
-    <a href="https://www.facebook.com/sharer/sharer.php?u=https://87sarahk3.github.io/ytym-/" target="_blank">
-      <button>Facebookでシェア</button>
+    <a href="https://www.facebook.com/sharer/sharer.php?u=https://87sarahk3.github.io/ytym-/" target="_blank" rel="noopener noreferrer">
+      <button style="padding: 10px 15px; background-color: #1877F2; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        Facebookでシェア
+      </button>
     </a>
-    <a href="https://line.me/R/msg/text/?https://87sarahk3.github.io/ytym-/" target="_blank">
-      <button>LINEでシェア</button>
+    <a href="https://social-plugins.line.me/lineit/share?url=https://87sarahk3.github.io/ytym-/" target="_blank" rel="noopener noreferrer">
+      <button style="padding: 10px 15px; background-color: #06C755; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        LINEでシェア
+      </button>
     </a>
   </div>
 
@@ -203,9 +209,9 @@
     function normalize(text) {
       return text
         .toLowerCase()
-        .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60)) // ひらがな→カタカナ
-        .replace(/ー/g, '') // 長音記号除去
-        .replace(/\s+/g, ''); // 空白除去
+        .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
+        .replace(/ー/g, '')
+        .replace(/\s+/g, '');
     }
 
     function generateCalendar() {
@@ -243,15 +249,16 @@
 
     function showTooltip(date, events, dotEl) {
       const list = events.filter(ev => new Date(ev.start).toISOString().slice(0, 10) === date);
-      tooltip.innerHTML = list.map(ev => ` 
-        <strong>${ev.title}</strong><br> 
-        <small>${new Date(ev.start).toLocaleDateString()}</small><br> 
+      tooltip.innerHTML = list.map(ev => `
+        <strong>${ev.title}</strong><br>
+        <small>${new Date(ev.start).toLocaleDateString()}</small><br>
         <p>${ev.details}</p>
-        ${ev.imageUrl ? `<img src="${ev.imageUrl}" class="image-preview">` : ''} 
-        <div class="modify-delete-buttons"> 
-          <button class="modify" onclick="modifyEvent(${ytymEvents.indexOf(ev)})">修正</button> 
-          <button class="delete" onclick="deleteEvent(${ytymEvents.indexOf(ev)})">削除</button> 
-        </div>`).join('<hr>');
+        ${ev.imageUrl ? `<img src="${ev.imageUrl}" class="image-preview">` : ''}
+        <div class="modify-delete-buttons">
+          <button class="modify" onclick="modifyEvent(${ytymEvents.indexOf(ev)})">修正</button>
+          <button class="delete" onclick="deleteEvent(${ytymEvents.indexOf(ev)})">削除</button>
+        </div>
+      `).join('<hr>');
       const rect = dotEl.getBoundingClientRect();
       tooltip.style.top = `${rect.bottom + window.scrollY}px`;
       tooltip.style.left = `${rect.left + window.scrollX}px`;
@@ -264,44 +271,46 @@
       const title = document.getElementById('ytym-title').value;
       const details = document.getElementById('ytym-details').value;
       const image = document.getElementById('event-image').files[0];
-      const imageUrl = image ? URL.createObjectURL(image) : '';
+      const imageUrl = image ? URL.createObjectURL(image) : null;
 
-      const event = { start: new Date(date), title, details, imageUrl };
-      ytymEvents.push(event);
-      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
+      ytymEvents.push({ start: new Date(date), title, details, imageUrl });
+      saveEvents();
+      e.target.reset();
       generateCalendar();
-      document.getElementById('ytym-form').reset();
+      tooltip.style.display = 'none';
+      document.getElementById('image-preview-container').innerHTML = '';
     }
 
-    function handleImagePreview(e) {
+    function handleImagePreview() {
+      const file = document.getElementById('event-image').files[0];
       const previewContainer = document.getElementById('image-preview-container');
-      previewContainer.innerHTML = '';
-      const file = e.target.files[0];
       if (file) {
         const img = document.createElement('img');
         img.src = URL.createObjectURL(file);
         img.classList.add('image-preview');
+        previewContainer.innerHTML = '';
         previewContainer.appendChild(img);
       }
     }
 
     function modifyEvent(index) {
+      const ev = ytymEvents[index];
       currentEditIndex = index;
-      const event = ytymEvents[index];
-      document.getElementById('modify-date').value = new Date(event.start).toISOString().slice(0, 10);
-      document.getElementById('modify-title').value = event.title;
-      document.getElementById('modify-details').value = event.details;
+      document.getElementById('modify-date').value = new Date(ev.start).toISOString().slice(0, 10);
+      document.getElementById('modify-title').value = ev.title;
+      document.getElementById('modify-details').value = ev.details;
       document.getElementById('modify-modal').style.display = 'block';
     }
 
     function saveModifiedEvent() {
-      const event = ytymEvents[currentEditIndex];
-      event.start = new Date(document.getElementById('modify-date').value);
-      event.title = document.getElementById('modify-title').value;
-      event.details = document.getElementById('modify-details').value;
-      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
-      generateCalendar();
+      const ev = ytymEvents[currentEditIndex];
+      ev.start = new Date(document.getElementById('modify-date').value);
+      ev.title = document.getElementById('modify-title').value;
+      ev.details = document.getElementById('modify-details').value;
+      saveEvents();
       closeModifyModal();
+      generateCalendar();
+      tooltip.style.display = 'none';
     }
 
     function closeModifyModal() {
@@ -309,10 +318,16 @@
     }
 
     function deleteEvent(index) {
-      ytymEvents.splice(index, 1);
+      if (confirm("削除しますか？")) {
+        ytymEvents.splice(index, 1);
+        saveEvents();
+        generateCalendar();
+        tooltip.style.display = 'none';
+      }
+    }
+
+    function saveEvents() {
       localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
-      generateCalendar();
-      closeModifyModal();
     }
   </script>
 </body>
