@@ -318,12 +318,10 @@
     }
 
     function deleteEvent(index) {
-      if (confirm("削除しますか？")) {
-        ytymEvents.splice(index, 1);
-        saveEvents();
-        generateCalendar();
-        tooltip.style.display = 'none';
-      }
+      ytymEvents.splice(index, 1);
+      saveEvents();
+      generateCalendar();
+      tooltip.style.display = 'none';
     }
 
     function saveEvents() {
