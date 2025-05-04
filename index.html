@@ -157,13 +157,13 @@
 
   <!-- SNSシェアボタン -->
   <div>
-    <a href="https://twitter.com/intent/tweet?url=https://sites.google.com/view/ytym/%E3%83%9B%E3%83%BC%E3%83%A0" target="_blank">
+    <a href="https://twitter.com/intent/tweet?url=https://87sarahk3.github.io/ytym-.github.io/" target="_blank">
       <button>Twitterでシェア</button>
     </a>
-    <a href="https://www.facebook.com/sharer/sharer.php?u=https://sites.google.com/view/ytym/%E3%83%9B%E3%83%BC%E3%83%A0" target="_blank">
+    <a href="https://www.facebook.com/sharer/sharer.php?u=https://87sarahk3.github.io/ytym-.github.io/" target="_blank">
       <button>Facebookでシェア</button>
     </a>
-    <a href="https://line.me/R/msg/text/?https://sites.google.com/view/ytym/%E3%83%9B%E3%83%BC%E3%83%A0" target="_blank">
+    <a href="https://line.me/R/msg/text/?https://87sarahk3.github.io/ytym-.github.io/" target="_blank">
       <button>LINEでシェア</button>
     </a>
   </div>
@@ -254,74 +254,79 @@
         </div>
       `).join('<hr>');
       const rect = dotEl.getBoundingClientRect();
-      tooltip.style.top = `${rect.bottom + window.scrollY}px`;
-      tooltip.style.left = `${rect.left + window.scrollX}px`;
+      tooltip.style.top = `${rect.top + window.scrollY + rect.height + 5}px`;
+      tooltip.style.left = `${rect.left + window.scrollX - tooltip.offsetWidth / 2 + rect.width / 2}px`;
       tooltip.style.display = 'block';
-    }
-
-    function handleFormSubmit(e) {
-      e.preventDefault();
-      const date = document.getElementById('ytym-date').value;
-      const title = document.getElementById('ytym-title').value;
-      const details = document.getElementById('ytym-details').value;
-      const image = document.getElementById('event-image').files[0];
-      const imageUrl = image ? URL.createObjectURL(image) : null;
-
-      ytymEvents.push({ start: new Date(date), title, details, imageUrl });
-      saveEvents();
-      e.target.reset();
-      generateCalendar();
-      tooltip.style.display = 'none';
-      document.getElementById('image-preview-container').innerHTML = '';
-    }
-
-    function handleImagePreview() {
-      const file = document.getElementById('event-image').files[0];
-      const previewContainer = document.getElementById('image-preview-container');
-      if (file) {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.classList.add('image-preview');
-        previewContainer.innerHTML = '';
-        previewContainer.appendChild(img);
-      }
-    }
-
-    function modifyEvent(index) {
-      const ev = ytymEvents[index];
-      currentEditIndex = index;
-      document.getElementById('modify-date').value = new Date(ev.start).toISOString().slice(0, 10);
-      document.getElementById('modify-title').value = ev.title;
-      document.getElementById('modify-details').value = ev.details;
-      document.getElementById('modify-modal').style.display = 'block';
-    }
-
-    function saveModifiedEvent() {
-      const ev = ytymEvents[currentEditIndex];
-      ev.start = new Date(document.getElementById('modify-date').value);
-      ev.title = document.getElementById('modify-title').value;
-      ev.details = document.getElementById('modify-details').value;
-      saveEvents();
-      closeModifyModal();
-      generateCalendar();
-      tooltip.style.display = 'none';
     }
 
     function closeModifyModal() {
       document.getElementById('modify-modal').style.display = 'none';
     }
 
-    function deleteEvent(index) {
-      if (confirm("削除しますか？")) {
-        ytymEvents.splice(index, 1);
-        saveEvents();
+    function modifyEvent(index) {
+      currentEditIndex = index;
+      const ev = ytymEvents[index];
+      document.getElementById('modify-date').value = ev.start.slice(0, 10);
+      document.getElementById('modify-title').value = ev.title;
+      document.getElementById('modify-details').value = ev.details;
+      document.getElementById('modify-modal').style.display = 'block';
+    }
+
+    function saveModifiedEvent() {
+      const title = document.getElementById('modify-title').value;
+      const details = document.getElementById('modify-details').value;
+      const date = document.getElementById('modify-date').value;
+
+      if (currentEditIndex !== -1) {
+        ytymEvents[currentEditIndex].title = title;
+        ytymEvents[currentEditIndex].details = details;
+        ytymEvents[currentEditIndex].start = date + 'T00:00:00';
+        localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
         generateCalendar();
-        tooltip.style.display = 'none';
+      }
+
+      closeModifyModal();
+    }
+
+    function deleteEvent(index) {
+      ytymEvents.splice(index, 1);
+      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
+      generateCalendar();
+      closeModifyModal();
+    }
+
+    function handleImagePreview(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById('image-preview-container').innerHTML = `<img src="${e.target.result}" class="image-preview">`;
+        };
+        reader.readAsDataURL(file);
       }
     }
 
-    function saveEvents() {
+    function handleFormSubmit(event) {
+      event.preventDefault();
+
+      const date = document.getElementById('ytym-date').value;
+      const title = document.getElementById('ytym-title').value;
+      const details = document.getElementById('ytym-details').value;
+      const file = document.getElementById('event-image').files[0];
+      const imageUrl = file ? URL.createObjectURL(file) : null;
+
+      const newEvent = {
+        start: date + 'T00:00:00',
+        title: title,
+        details: details,
+        imageUrl: imageUrl
+      };
+
+      ytymEvents.push(newEvent);
       localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
+      generateCalendar();
+      document.getElementById('ytym-form').reset();
+      document.getElementById('image-preview-container').innerHTML = '';
     }
   </script>
 </body>
