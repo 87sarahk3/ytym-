@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ytym年表</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ytym年表</title>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       background-color: #f4f4f4;
       margin: 0;
       padding: 20px 10px;
@@ -33,14 +33,11 @@
       color: white;
       padding: 10px;
       border-radius: 5px;
-      background-color: #1da1f2; /* Twitter color */
+      background-color: #1da1f2;
     }
     #sns-share .facebook { background-color: #3b5998; }
     #sns-share .line { background-color: #00c300; }
-    #sns-share .twitter { background-color: #1da1f2; }
-    #sns-share a:hover {
-      opacity: 0.8;
-    }
+    #sns-share a:hover { opacity: 0.8; }
     #ytym-form, #modify-modal {
       background-color: #fff;
       padding: 15px;
@@ -147,7 +144,6 @@
 <body>
   <h1>ytym年表</h1>
 
-  <!-- SNS共有ボタン -->
   <div id="sns-share">
     <a href="https://twitter.com/share?url=https://87sarahk3.github.io/ytym-/&text=私の年表「ytym年表」を見てね！" target="_blank" class="twitter">Twitter</a>
     <a href="https://www.facebook.com/sharer/sharer.php?u=https://87sarahk3.github.io/ytym-/" target="_blank" class="facebook">Facebook</a>
@@ -201,6 +197,7 @@
       document.getElementById('yearFilter').addEventListener('change', generateCalendar);
       document.getElementById('search-input').addEventListener('input', generateCalendar);
       document.getElementById('event-image').addEventListener('change', handleImagePreview);
+      document.getElementById('modify-image').addEventListener('change', handleModifyImagePreview);
       populateYearOptions();
       generateCalendar();
     });
@@ -216,8 +213,7 @@
     }
 
     function normalize(text) {
-      return text
-        .toLowerCase()
+      return text.toLowerCase()
         .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
         .replace(/ー/g, '')
         .replace(/\s+/g, '');
@@ -236,22 +232,28 @@
         monthTitle.textContent = `${m}月`;
         div.appendChild(monthTitle);
 
-        const filtered = ytymEvents.filter(ev => {
-          const d = new Date(ev.start);
-          return d.getMonth() + 1 === m &&
-            (yearFilter === 'all' || d.getFullYear().toString() === yearFilter) &&
-            (normalize(ev.title).includes(keyword) || normalize(ev.details).includes(keyword));
-        });
+        const daysInMonth = new Date(2024, m, 0).getDate();
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'dots-container';
 
-        const uniqueDates = [...new Set(filtered.map(ev => new Date(ev.start).toISOString().slice(0, 10)))];
-        uniqueDates.forEach(date => {
-          const dot = document.createElement('div');
-          dot.className = 'event-dot';
-          dot.style.backgroundColor = yearColors[new Date(date).getFullYear()] || 'gray';
-          dot.onclick = () => showTooltip(date, filtered, dot);
-          div.appendChild(dot);
-        });
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `2024-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const eventsForDate = ytymEvents.filter(ev => {
+            const evNormalizedTitle = normalize(ev.title);
+            return ev.start.startsWith(dateStr) &&
+                   (normalize(ev.details).includes(keyword) || evNormalizedTitle.includes(keyword));
+          });
 
+          if (eventsForDate.length > 0) {
+            const dotEl = document.createElement('div');
+            dotEl.className = 'event-dot';
+            dotEl.style.backgroundColor = yearColors[eventsForDate[0].start.slice(0, 4)] || 'gray';
+            dotEl.addEventListener('click', () => showTooltip(dateStr, eventsForDate, dotEl));
+            dotsContainer.appendChild(dotEl);
+          }
+        }
+
+        div.appendChild(dotsContainer);
         container.appendChild(div);
       }
     }
@@ -274,61 +276,26 @@
       tooltip.style.display = 'block';
     }
 
-    function handleFormSubmit(e) {
-      e.preventDefault();
-      const date = document.getElementById('ytym-date').value;
-      const title = document.getElementById('ytym-title').value;
-      const details = document.getElementById('ytym-details').value;
-      const image = document.getElementById('event-image').files[0];
-      const imageUrl = image ? URL.createObjectURL(image) : null;
-
-      ytymEvents.push({ start: new Date(date), title, details, imageUrl });
-      saveEvents();
-      e.target.reset();
-      generateCalendar();
-      tooltip.style.display = 'none';
-      document.getElementById('image-preview-container').innerHTML = '';
-    }
-
-    function handleImagePreview() {
-      const file = document.getElementById('event-image').files[0];
-      const previewContainer = document.getElementById('image-preview-container');
-      if (file) {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.classList.add('image-preview');
-        previewContainer.innerHTML = '';
-        previewContainer.appendChild(img);
-      }
-    }
-
     function modifyEvent(index) {
-      const ev = ytymEvents[index];
       currentEditIndex = index;
-      document.getElementById('modify-date').value = new Date(ev.start).toISOString().slice(0, 10);
-      document.getElementById('modify-title').value = ev.title;
-      document.getElementById('modify-details').value = ev.details;
-      if (ev.imageUrl) {
-        const img = document.createElement('img');
-        img.src = ev.imageUrl;
-        img.classList.add('image-preview');
-        document.getElementById('modify-image-preview-container').innerHTML = '';
-        document.getElementById('modify-image-preview-container').appendChild(img);
-      }
+      const event = ytymEvents[index];
+      document.getElementById('modify-date').value = event.start.split('T')[0];
+      document.getElementById('modify-title').value = event.title;
+      document.getElementById('modify-details').value = event.details;
       document.getElementById('modify-modal').style.display = 'block';
     }
 
     function saveModifiedEvent() {
-      const ev = ytymEvents[currentEditIndex];
-      ev.start = new Date(document.getElementById('modify-date').value);
-      ev.title = document.getElementById('modify-title').value;
-      ev.details = document.getElementById('modify-details').value;
-      const image = document.getElementById('modify-image').files[0];
-      ev.imageUrl = image ? URL.createObjectURL(image) : ev.imageUrl;
-
-      saveEvents();
-      closeModifyModal();
+      const modifiedEvent = {
+        start: document.getElementById('modify-date').value + 'T00:00:00',
+        title: document.getElementById('modify-title').value,
+        details: document.getElementById('modify-details').value,
+        imageUrl: ''
+      };
+      ytymEvents[currentEditIndex] = modifiedEvent;
+      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
       generateCalendar();
+      closeModifyModal();
     }
 
     function closeModifyModal() {
@@ -336,15 +303,50 @@
     }
 
     function deleteEvent(index) {
-      if (confirm("このイベントを削除しますか？")) {
-        ytymEvents.splice(index, 1);
-        saveEvents();
-        generateCalendar();
+      ytymEvents.splice(index, 1);
+      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
+      generateCalendar();
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const date = document.getElementById('ytym-date').value;
+      const title = document.getElementById('ytym-title').value;
+      const details = document.getElementById('ytym-details').value;
+      const imageInput = document.getElementById('event-image');
+      const imageUrl = imageInput.files.length > 0 ? URL.createObjectURL(imageInput.files[0]) : '';
+
+      saveEvent(date, title, details, imageUrl);
+      document.getElementById('ytym-form').reset();
+      generateCalendar();
+    }
+
+    function saveEvent(date, title, details, imageUrl = '') {
+      ytymEvents.push({ start: date, title, details, imageUrl });
+      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
+      generateCalendar();
+    }
+
+    function handleImagePreview() {
+      const imageInput = document.getElementById('event-image');
+      const previewContainer = document.getElementById('image-preview-container');
+      previewContainer.innerHTML = '';
+      if (imageInput.files.length > 0) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(imageInput.files[0]);
+        previewContainer.appendChild(img);
       }
     }
 
-    function saveEvents() {
-      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
+    function handleModifyImagePreview() {
+      const imageInput = document.getElementById('modify-image');
+      const previewContainer = document.getElementById('modify-image-preview-container');
+      previewContainer.innerHTML = '';
+      if (imageInput.files.length > 0) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(imageInput.files[0]);
+        previewContainer.appendChild(img);
+      }
     }
   </script>
 </body>
