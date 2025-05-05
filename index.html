@@ -149,30 +149,13 @@
     <input type="date" id="modify-date">
     <input type="text" id="modify-title">
     <textarea id="modify-details"></textarea>
+    <input type="file" id="modify-image" accept="image/*">
+    <div id="modify-image-preview-container"></div>
     <button onclick="saveModifiedEvent()">保存</button>
     <button onclick="closeModifyModal()">キャンセル</button>
   </div>
 
   <div class="tooltip" id="tooltip"></div>
-
-  <!-- SNSシェアボタン -->
-  <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-    <a href="https://twitter.com/intent/tweet?text=ytym年表を見てみて！&url=https%3A%2F%2F87sarahk3.github.io%2Fytym-/" target="_blank" rel="noopener noreferrer">
-      <button style="padding: 10px 15px; background-color: #1DA1F2; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        Twitterでシェア
-      </button>
-    </a>
-    <a href="https://www.facebook.com/sharer/sharer.php?u=https://87sarahk3.github.io/ytym-/" target="_blank" rel="noopener noreferrer">
-      <button style="padding: 10px 15px; background-color: #1877F2; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        Facebookでシェア
-      </button>
-    </a>
-    <a href="https://social-plugins.line.me/lineit/share?url=https://87sarahk3.github.io/ytym-/" target="_blank" rel="noopener noreferrer">
-      <button style="padding: 10px 15px; background-color: #06C755; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        LINEでシェア
-      </button>
-    </a>
-  </div>
 
   <script>
     let ytymEvents = JSON.parse(localStorage.getItem('ytymEvents')) || [];
@@ -299,6 +282,13 @@
       document.getElementById('modify-date').value = new Date(ev.start).toISOString().slice(0, 10);
       document.getElementById('modify-title').value = ev.title;
       document.getElementById('modify-details').value = ev.details;
+      if (ev.imageUrl) {
+        const img = document.createElement('img');
+        img.src = ev.imageUrl;
+        img.classList.add('image-preview');
+        document.getElementById('modify-image-preview-container').innerHTML = '';
+        document.getElementById('modify-image-preview-container').appendChild(img);
+      }
       document.getElementById('modify-modal').style.display = 'block';
     }
 
@@ -307,6 +297,10 @@
       ev.start = new Date(document.getElementById('modify-date').value);
       ev.title = document.getElementById('modify-title').value;
       ev.details = document.getElementById('modify-details').value;
+      const newImage = document.getElementById('modify-image').files[0];
+      if (newImage) {
+        ev.imageUrl = URL.createObjectURL(newImage);
+      }
       saveEvents();
       closeModifyModal();
       generateCalendar();
