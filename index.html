@@ -1,326 +1,351 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ytym年表</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 20px 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      font-size: 28px;
-      color: #333;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    #ytym-form, #modify-modal {
-      background-color: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 400px;
-      margin-bottom: 20px;
-    }
-    #ytym-form input, #ytym-form textarea, #ytym-form button,
-    #control-panel select, #control-panel input,
-    #modify-modal input, #modify-modal textarea {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    #ytym-form button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    #control-panel {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 20px;
-      width: 100%;
-      max-width: 400px;
-    }
-    .calendar-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 15px;
-      width: 100%;
-    }
-    .calendar {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 10px;
-      width: 160px;
-      text-align: center;
-    }
-    .calendar-title {
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .event-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin: 5px auto;
-      cursor: pointer;
-    }
-    .tooltip {
-      position: absolute;
-      background: white;
-      padding: 10px;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      z-index: 100;
-      font-size: 14px;
-      max-width: 250px;
-      display: none;
-    }
-    .tooltip img {
-      max-width: 100%;
-      height: auto;
-      margin-top: 10px;
-    }
-    .image-preview {
-      width: 100%;
-      max-height: 120px;
-      object-fit: cover;
-      margin-top: 5px;
-    }
-    .modify-delete-buttons {
-      display: flex;
-      gap: 5px;
-      margin-top: 10px;
-    }
-    .modify-delete-buttons button {
-      flex: 1;
-      padding: 6px;
-      font-size: 14px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button.modify { background: orange; color: white; }
-    button.delete { background: crimson; color: white; }
+  <meta charset="UTF-8">
+  <title>ytym年表</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    #sns-share {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #sns-share a {
+      text-decoration: none;
+      font-size: 16px;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: #1da1f2; /* Twitter color */
+    }
+    #sns-share .facebook { background-color: #3b5998; }
+    #sns-share .line { background-color: #00c300; }
+    #sns-share .twitter { background-color: #1da1f2; }
+    #sns-share a:hover {
+      opacity: 0.8;
+    }
+    #ytym-form, #modify-modal {
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 20px;
+    }
+    #ytym-form input, #ytym-form textarea, #ytym-form button,
+    #control-panel select, #control-panel input,
+    #modify-modal input, #modify-modal textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #ytym-form button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .calendar-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      width: 100%;
+    }
+    .calendar {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 10px;
+      width: 160px;
+      text-align: center;
+    }
+    .calendar-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .event-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin: 5px auto;
+      cursor: pointer;
+    }
+    .tooltip {
+      position: absolute;
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 100;
+      font-size: 14px;
+      max-width: 250px;
+      display: none;
+    }
+    .tooltip img {
+      max-width: 100%;
+      height: auto;
+      margin-top: 10px;
+    }
+    .image-preview {
+      width: 100%;
+      max-height: 120px;
+      object-fit: cover;
+      margin-top: 5px;
+    }
+    .modify-delete-buttons {
+      display: flex;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .modify-delete-buttons button {
+      flex: 1;
+      padding: 6px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button.modify { background: orange; color: white; }
+    button.delete { background: crimson; color: white; }
 
-    @media (max-width: 480px) {
-      .calendar { width: 100%; }
-    }
-  </style>
+    @media (max-width: 480px) {
+      .calendar { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-  <h1>ytym年表</h1>
+  <h1>ytym年表</h1>
 
-  <form id="ytym-form">
-    <input type="date" id="ytym-date" required>
-    <input type="text" id="ytym-title" placeholder="ytym名" required>
-    <textarea id="ytym-details" placeholder="詳細を入力" required></textarea>
-    <input type="file" id="event-image" accept="image/*">
-    <div id="image-preview-container"></div>
-    <button type="submit">追加</button>
-  </form>
+  <!-- SNS共有ボタン -->
+  <div id="sns-share">
+    <a href="https://twitter.com/share?url=https://87sarahk3.github.io/ytym-/&text=私の年表「ytym年表」を見てね！" target="_blank" class="twitter">Twitter</a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u=https://87sarahk3.github.io/ytym-/" target="_blank" class="facebook">Facebook</a>
+    <a href="https://line.me/R/share?url=https://87sarahk3.github.io/ytym-/&text=私の年表「ytym年表」を見てね！" target="_blank" class="line">LINE</a>
+  </div>
 
-  <div id="control-panel">
-    <select id="yearFilter"><option value="all">すべての年</option></select>
-    <input type="text" id="search-input" placeholder="あいまい検索（例: すぱげってぃ）">
-  </div>
+  <form id="ytym-form">
+    <input type="date" id="ytym-date" required>
+    <input type="text" id="ytym-title" placeholder="ytym名" required>
+    <textarea id="ytym-details" placeholder="詳細を入力" required></textarea>
+    <input type="file" id="event-image" accept="image/*">
+    <div id="image-preview-container"></div>
+    <button type="submit">追加</button>
+  </form>
 
-  <div class="calendar-container" id="calContainer"></div>
+  <div id="control-panel">
+    <select id="yearFilter"><option value="all">すべての年</option></select>
+    <input type="text" id="search-input" placeholder="あいまい検索（例: すぱげってぃ）">
+  </div>
 
-  <div id="modify-modal" style="display:none;">
-    <h3>イベント修正</h3>
-    <input type="date" id="modify-date">
-    <input type="text" id="modify-title">
-    <textarea id="modify-details"></textarea>
-    <input type="file" id="modify-image" accept="image/*">
-    <div id="modify-image-preview-container"></div>
-    <button onclick="saveModifiedEvent()">保存</button>
-    <button onclick="closeModifyModal()">キャンセル</button>
-  </div>
+  <div class="calendar-container" id="calContainer"></div>
 
-  <div class="tooltip" id="tooltip"></div>
+  <div id="modify-modal" style="display:none;">
+    <h3>イベント修正</h3>
+    <input type="date" id="modify-date">
+    <input type="text" id="modify-title">
+    <textarea id="modify-details"></textarea>
+    <input type="file" id="modify-image" accept="image/*">
+    <div id="modify-image-preview-container"></div>
+    <button onclick="saveModifiedEvent()">保存</button>
+    <button onclick="closeModifyModal()">キャンセル</button>
+  </div>
 
-  <script>
-    let ytymEvents = JSON.parse(localStorage.getItem('ytymEvents')) || [];
-    let currentEditIndex = -1;
-    const container = document.getElementById('calContainer');
-    const tooltip = document.getElementById('tooltip');
+  <div class="tooltip" id="tooltip"></div>
 
-    const yearColors = {
-      "2004-2006": 'gray', "2007-2012": 'lightblue', 2013: 'blue', 2014: 'purple',
-      2015: 'pink', 2016: 'red', 2017: 'orange', 2018: 'yellow', 2019: 'yellowgreen',
-      2020: 'green', 2021: 'turquoise', 2022: 'navy', 2023: 'black', 2024: 'gold',
-      2025: 'silver', 2026: 'coral', 2027: 'indigo', 2028: 'brown', 2029: 'teal', 2030: 'darkred'
-    };
+  <script>
+    let ytymEvents = JSON.parse(localStorage.getItem('ytymEvents')) || [];
+    let currentEditIndex = -1;
+    const container = document.getElementById('calContainer');
+    const tooltip = document.getElementById('tooltip');
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('ytym-form').addEventListener('submit', handleFormSubmit);
-      document.getElementById('yearFilter').addEventListener('change', generateCalendar);
-      document.getElementById('search-input').addEventListener('input', generateCalendar);
-      document.getElementById('event-image').addEventListener('change', handleImagePreview);
-      populateYearOptions();
-      generateCalendar();
-    });
+    const yearColors = {
+      "2004-2006": 'gray', "2007-2012": 'lightblue', 2013: 'blue', 2014: 'purple',
+      2015: 'pink', 2016: 'red', 2017: 'orange', 2018: 'yellow', 2019: 'yellowgreen',
+      2020: 'green', 2021: 'turquoise', 2022: 'navy', 2023: 'black', 2024: 'gold',
+      2025: 'silver', 2026: 'coral', 2027: 'indigo', 2028: 'brown', 2029: 'teal', 2030: 'darkred'
+    };
 
-    function populateYearOptions() {
-      const yearSelect = document.getElementById('yearFilter');
-      for (let y = 2000; y <= 2030; y++) {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = y;
-        yearSelect.appendChild(opt);
-      }
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('ytym-form').addEventListener('submit', handleFormSubmit);
+      document.getElementById('yearFilter').addEventListener('change', generateCalendar);
+      document.getElementById('search-input').addEventListener('input', generateCalendar);
+      document.getElementById('event-image').addEventListener('change', handleImagePreview);
+      populateYearOptions();
+      generateCalendar();
+    });
 
-    function normalize(text) {
-      return text
-        .toLowerCase()
-        .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
-        .replace(/ー/g, '')
-        .replace(/\s+/g, '');
-    }
+    function populateYearOptions() {
+      const yearSelect = document.getElementById('yearFilter');
+      for (let y = 2000; y <= 2030; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      }
+    }
 
-    function generateCalendar() {
-      container.innerHTML = '';
-      const yearFilter = document.getElementById('yearFilter').value;
-      const keyword = normalize(document.getElementById('search-input').value);
+    function normalize(text) {
+      return text
+        .toLowerCase()
+        .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
+        .replace(/ー/g, '')
+        .replace(/\s+/g, '');
+    }
 
-      for (let m = 1; m <= 12; m++) {
-        const div = document.createElement('div');
-        div.className = 'calendar';
-        const monthTitle = document.createElement('div');
-        monthTitle.className = 'calendar-title';
-        monthTitle.textContent = `${m}月`;
-        div.appendChild(monthTitle);
+    function generateCalendar() {
+      container.innerHTML = '';
+      const yearFilter = document.getElementById('yearFilter').value;
+      const keyword = normalize(document.getElementById('search-input').value);
 
-        const filtered = ytymEvents.filter(ev => {
-          const d = new Date(ev.start);
-          return d.getMonth() + 1 === m &&
-            (yearFilter === 'all' || d.getFullYear().toString() === yearFilter) &&
-            (normalize(ev.title).includes(keyword) || normalize(ev.details).includes(keyword));
-        });
+      for (let m = 1; m <= 12; m++) {
+        const div = document.createElement('div');
+        div.className = 'calendar';
+        const monthTitle = document.createElement('div');
+        monthTitle.className = 'calendar-title';
+        monthTitle.textContent = `${m}月`;
+        div.appendChild(monthTitle);
 
-        const uniqueDates = [...new Set(filtered.map(ev => new Date(ev.start).toISOString().slice(0, 10)))];
-        uniqueDates.forEach(date => {
-          const dot = document.createElement('div');
-          dot.className = 'event-dot';
-          dot.style.backgroundColor = yearColors[new Date(date).getFullYear()] || 'gray';
-          dot.onclick = () => showTooltip(date, filtered, dot);
-          div.appendChild(dot);
-        });
+        const filtered = ytymEvents.filter(ev => {
+          const d = new Date(ev.start);
+          return d.getMonth() + 1 === m &&
+            (yearFilter === 'all' || d.getFullYear().toString() === yearFilter) &&
+            (normalize(ev.title).includes(keyword) || normalize(ev.details).includes(keyword));
+        });
 
-        container.appendChild(div);
-      }
-    }
+        const uniqueDates = [...new Set(filtered.map(ev => new Date(ev.start).toISOString().slice(0, 10)))];
+        uniqueDates.forEach(date => {
+          const dot = document.createElement('div');
+          dot.className = 'event-dot';
+          dot.style.backgroundColor = yearColors[new Date(date).getFullYear()] || 'gray';
+          dot.onclick = () => showTooltip(date, filtered, dot);
+          div.appendChild(dot);
+        });
 
-    function showTooltip(date, events, dotEl) {
-      const list = events.filter(ev => new Date(ev.start).toISOString().slice(0, 10) === date);
-      tooltip.innerHTML = list.map(ev => `
-        <strong>${ev.title}</strong><br>
-        <small>${new Date(ev.start).toLocaleDateString()}</small><br>
-        <p>${ev.details}</p>
-        ${ev.imageUrl ? `<img src="${ev.imageUrl}" class="image-preview">` : ''}
-        <div class="modify-delete-buttons">
-          <button class="modify" onclick="modifyEvent(${ytymEvents.indexOf(ev)})">修正</button>
-          <button class="delete" onclick="deleteEvent(${ytymEvents.indexOf(ev)})">削除</button>
-        </div>
-      `).join('<hr>');
-      const rect = dotEl.getBoundingClientRect();
-      tooltip.style.top = `${rect.bottom + window.scrollY}px`;
-      tooltip.style.left = `${rect.left + window.scrollX}px`;
-      tooltip.style.display = 'block';
-    }
+        container.appendChild(div);
+      }
+    }
 
-    function handleFormSubmit(e) {
-      e.preventDefault();
-      const date = document.getElementById('ytym-date').value;
-      const title = document.getElementById('ytym-title').value;
-      const details = document.getElementById('ytym-details').value;
-      const image = document.getElementById('event-image').files[0];
-      const imageUrl = image ? URL.createObjectURL(image) : null;
+    function showTooltip(date, events, dotEl) {
+      const list = events.filter(ev => new Date(ev.start).toISOString().slice(0, 10) === date);
+      tooltip.innerHTML = list.map(ev => `
+        <strong>${ev.title}</strong><br>
+        <small>${new Date(ev.start).toLocaleDateString()}</small><br>
+        <p>${ev.details}</p>
+        ${ev.imageUrl ? `<img src="${ev.imageUrl}" class="image-preview">` : ''}
+        <div class="modify-delete-buttons">
+          <button class="modify" onclick="modifyEvent(${ytymEvents.indexOf(ev)})">修正</button>
+          <button class="delete" onclick="deleteEvent(${ytymEvents.indexOf(ev)})">削除</button>
+        </div>
+      `).join('<hr>');
+      const rect = dotEl.getBoundingClientRect();
+      tooltip.style.top = `${rect.bottom + window.scrollY}px`;
+      tooltip.style.left = `${rect.left + window.scrollX}px`;
+      tooltip.style.display = 'block';
+    }
 
-      ytymEvents.push({ start: new Date(date), title, details, imageUrl });
-      saveEvents();
-      e.target.reset();
-      generateCalendar();
-      tooltip.style.display = 'none';
-      document.getElementById('image-preview-container').innerHTML = '';
-    }
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const date = document.getElementById('ytym-date').value;
+      const title = document.getElementById('ytym-title').value;
+      const details = document.getElementById('ytym-details').value;
+      const image = document.getElementById('event-image').files[0];
+      const imageUrl = image ? URL.createObjectURL(image) : null;
 
-    function handleImagePreview() {
-      const file = document.getElementById('event-image').files[0];
-      const previewContainer = document.getElementById('image-preview-container');
-      if (file) {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.classList.add('image-preview');
-        previewContainer.innerHTML = '';
-        previewContainer.appendChild(img);
-      }
-    }
+      ytymEvents.push({ start: new Date(date), title, details, imageUrl });
+      saveEvents();
+      e.target.reset();
+      generateCalendar();
+      tooltip.style.display = 'none';
+      document.getElementById('image-preview-container').innerHTML = '';
+    }
 
-    function modifyEvent(index) {
-      const ev = ytymEvents[index];
-      currentEditIndex = index;
-      document.getElementById('modify-date').value = new Date(ev.start).toISOString().slice(0, 10);
-      document.getElementById('modify-title').value = ev.title;
-      document.getElementById('modify-details').value = ev.details;
-      if (ev.imageUrl) {
-        const img = document.createElement('img');
-        img.src = ev.imageUrl;
-        img.classList.add('image-preview');
-        document.getElementById('modify-image-preview-container').innerHTML = '';
-        document.getElementById('modify-image-preview-container').appendChild(img);
-      }
-      document.getElementById('modify-modal').style.display = 'block';
-    }
+    function handleImagePreview() {
+      const file = document.getElementById('event-image').files[0];
+      const previewContainer = document.getElementById('image-preview-container');
+      if (file) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.classList.add('image-preview');
+        previewContainer.innerHTML = '';
+        previewContainer.appendChild(img);
+      }
+    }
 
-    function saveModifiedEvent() {
-      const ev = ytymEvents[currentEditIndex];
-      ev.start = new Date(document.getElementById('modify-date').value);
-      ev.title = document.getElementById('modify-title').value;
-      ev.details = document.getElementById('modify-details').value;
-      const newImage = document.getElementById('modify-image').files[0];
-      if (newImage) {
-        ev.imageUrl = URL.createObjectURL(newImage);
-      }
-      saveEvents();
-      closeModifyModal();
-      generateCalendar();
-      tooltip.style.display = 'none';
-    }
+    function modifyEvent(index) {
+      const ev = ytymEvents[index];
+      currentEditIndex = index;
+      document.getElementById('modify-date').value = new Date(ev.start).toISOString().slice(0, 10);
+      document.getElementById('modify-title').value = ev.title;
+      document.getElementById('modify-details').value = ev.details;
+      if (ev.imageUrl) {
+        const img = document.createElement('img');
+        img.src = ev.imageUrl;
+        img.classList.add('image-preview');
+        document.getElementById('modify-image-preview-container').innerHTML = '';
+        document.getElementById('modify-image-preview-container').appendChild(img);
+      }
+      document.getElementById('modify-modal').style.display = 'block';
+    }
 
-    function closeModifyModal() {
-      document.getElementById('modify-modal').style.display = 'none';
-    }
+    function saveModifiedEvent() {
+      const ev = ytymEvents[currentEditIndex];
+      ev.start = new Date(document.getElementById('modify-date').value);
+      ev.title = document.getElementById('modify-title').value;
+      ev.details = document.getElementById('modify-details').value;
+      const image = document.getElementById('modify-image').files[0];
+      ev.imageUrl = image ? URL.createObjectURL(image) : ev.imageUrl;
 
-    function deleteEvent(index) {
-      ytymEvents.splice(index, 1);
-      saveEvents();
-      generateCalendar();
-      tooltip.style.display = 'none';
-    }
+      saveEvents();
+      closeModifyModal();
+      generateCalendar();
+    }
 
-    function saveEvents() {
-      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
-    }
-  </script>
+    function closeModifyModal() {
+      document.getElementById('modify-modal').style.display = 'none';
+    }
+
+    function deleteEvent(index) {
+      if (confirm("このイベントを削除しますか？")) {
+        ytymEvents.splice(index, 1);
+        saveEvents();
+        generateCalendar();
+      }
+    }
+
+    function saveEvents() {
+      localStorage.setItem('ytymEvents', JSON.stringify(ytymEvents));
+    }
+  </script>
 </body>
 </html>
