@@ -1,162 +1,160 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ytym年表</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.js"></script>
-  <style>
-    /* 元のCSSそのままです（省略なし） */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; padding: 10px; background: #f0f0f0; }
-    #event-form, #event-list, #yearFilter, #search-box { margin: 10px 0; }
-    .event { background: white; border: 1px solid #ccc; padding: 10px; margin: 5px 0; position: relative; }
-    .event:hover .tooltip { display: block; }
-    .tooltip { display: none; position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #ccc; padding: 10px; z-index: 10; width: 300px; }
-    .event img { max-width: 100%; height: auto; }
-    @media (max-width: 480px) {
-      .tooltip { width: 100%; }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>ytym年表</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; padding: 10px; background: #f0f0f0; }
+    #event-form, #event-list, #yearFilter, #search-box { margin: 10px 0; }
+    .event { background: white; border: 1px solid #ccc; padding: 10px; margin: 5px 0; position: relative; }
+    .event:hover .tooltip { display: block; }
+    .tooltip { display: none; position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #ccc; padding: 10px; z-index: 10; width: 300px; }
+    .event img { max-width: 100%; height: auto; }
+    @media (max-width: 480px) {
+      .tooltip { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-  <h1>ytym年表</h1>
+  <h1>ytym年表</h1>
 
-  <select id="yearFilter"></select>
-  <input type="text" id="search-box" placeholder="イベント検索...">
+  <select id="yearFilter"></select>
+  <input type="text" id="search-box" placeholder="イベント検索...">
 
-  <form id="event-form">
-    <input type="text" id="title" placeholder="タイトル" required>
-    <input type="date" id="date" required>
-    <textarea id="description" placeholder="詳細"></textarea>
-    <input type="file" id="image">
-    <button type="submit">イベント追加</button>
-  </form>
+  <form id="event-form">
+    <input type="text" id="title" placeholder="タイトル" required>
+    <input type="date" id="date" required>
+    <textarea id="description" placeholder="詳細"></textarea>
+    <input type="file" id="image">
+    <button type="submit">イベント追加</button>
+  </form>
 
-  <div id="event-list"></div>
+  <div id="event-list"></div>
 
-  <!-- SNS共有リンク -->
-  <div>
-    <a id="twitter" href="" target="_blank">Twitterでシェア</a> /
-    <a id="facebook" href="" target="_blank">Facebookでシェア</a> /
-    <a id="line" href="" target="_blank">LINEでシェア</a>
-  </div>
+  <div>
+    <a id="twitter" href="" target="_blank">Twitterでシェア</a> /
+    <a id="facebook" href="" target="_blank">Facebookでシェア</a> /
+    <a id="line" href="" target="_blank">LINEでシェア</a>
+  </div>
 
-  <script>
-    const supabase = supabase.createClient(
-      'https://fnjmdbuwptysqwjtovzn.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuam1kYnV3cHR5c3F3anRvdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwNjgzNTYsImV4cCI6MjA2MzY0NDM1Nn0.Xk4r6cjgirCg7vRVr_K-JHA9xuA_owpzpV98GGOAExI'
-    );
+  <script>
+    const supabase = supabase.createClient(
+      'https://fnjmdbuwptysqwjtovzn.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuam1kYnV3cHR5c3F3anRvdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwNjgzNTYsImV4cCI6MjA2MzY0NDM1Nn0.Xk4r6cjgirCg7vRVr_K-JHA9xuA_owpzpV98GGOAExI'
+    );
 
-    const eventForm = document.getElementById('event-form');
-    const eventList = document.getElementById('event-list');
-    const yearFilter = document.getElementById('yearFilter');
-    const searchBox = document.getElementById('search-box');
+    const eventForm = document.getElementById('event-form');
+    const eventList = document.getElementById('event-list');
+    const yearFilter = document.getElementById('yearFilter');
+    const searchBox = document.getElementById('search-box');
 
-    const normalize = str => str
-      .replace(/[ー－]/g, "")
-      .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
-      .replace(/\s+/g, "").toLowerCase();
+    const normalize = str => str
+      .replace(/[ー－]/g, "")
+      .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
+      .replace(/\s+/g, "").toLowerCase();
 
-    eventForm.onsubmit = async e => {
-      e.preventDefault();
-      const title = document.getElementById('title').value;
-      const date = document.getElementById('date').value;
-      const description = document.getElementById('description').value;
-      const file = document.getElementById('image').files[0];
+    eventForm.onsubmit = async e => {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const date = document.getElementById('date').value;
+      const description = document.getElementById('description').value;
+      const file = document.getElementById('image').files[0];
 
-      let imageUrl = "";
-      if (file) {
-        const { data, error } = await supabase.storage.from('ytym').upload(`${Date.now()}_${file.name}`, file);
-        if (error) return alert("画像アップロード失敗: " + error.message);
-        const { data: publicUrlData } = supabase.storage.from('ytym').getPublicUrl(data.path);
-        imageUrl = publicUrlData.publicUrl;
-      }
+      let imageUrl = "";
+      if (file) {
+        const { data, error } = await supabase.storage.from('ytym').upload(`${Date.now()}_${file.name}`, file);
+        if (error) return alert("画像アップロード失敗: " + error.message);
+        const { data: publicUrlData } = supabase.storage.from('ytym').getPublicUrl(data.path);
+        imageUrl = publicUrlData.publicUrl;
+      }
 
-      const { error: insertError } = await supabase.from('events').insert({
-        title, date, description, image_url: imageUrl, timestamp: new Date().toISOString()
-      });
+      const { error: insertError } = await supabase.from('events').insert({
+        title, date, description, image_url: imageUrl, timestamp: new Date().toISOString()
+      });
 
-      if (insertError) return alert("登録失敗: " + insertError.message);
-      eventForm.reset();
-      loadEvents();
-    };
+      if (insertError) return alert("登録失敗: " + insertError.message);
+      eventForm.reset();
+      loadEvents();
+    };
 
-    async function loadEvents() {
-      const { data: events, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: true });
+    async function loadEvents() {
+      const { data: events, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true });
 
-      if (error) return alert("読み込みエラー: " + error.message);
+      if (error) return alert("読み込みエラー: " + error.message);
 
-      eventList.innerHTML = "";
-      const search = normalize(searchBox.value);
-      const selectedYear = yearFilter.value;
-      const years = new Set();
+      eventList.innerHTML = "";
+      const search = normalize(searchBox.value);
+      const selectedYear = yearFilter.value;
+      const years = new Set();
 
-      events.forEach(event => {
-        const y = new Date(event.date).getFullYear();
-        years.add(y);
-        if ((selectedYear && y != selectedYear) || (search && !normalize(event.title + event.description).includes(search))) return;
+      events.forEach(event => {
+        const y = new Date(event.date).getFullYear();
+        years.add(y);
+        if ((selectedYear && y != selectedYear) || (search && !normalize(event.title + event.description).includes(search))) return;
 
-        const div = document.createElement('div');
-        div.className = 'event';
-        div.style.background = `hsl(${y % 360}, 70%, 90%)`;
-        div.innerHTML = `
-          <strong>${event.title}</strong> (${event.date})<br>
-          <button onclick="editEvent('${event.id}')">修正</button>
-          <button onclick="deleteEvent('${event.id}', '${event.image_url}')">削除</button>
-          <div class="tooltip">
-            ${event.description ? `<p>${event.description}</p>` : ""}
-            ${event.image_url ? `<img src="${event.image_url}">` : ""}
-          </div>`;
-        eventList.appendChild(div);
-      });
+        const div = document.createElement('div');
+        div.className = 'event';
+        div.style.background = `hsl(${y % 360}, 70%, 90%)`;
+        div.innerHTML = `
+          <strong>${event.title}</strong> (${event.date})<br>
+          <button onclick="editEvent('${event.id}')">修正</button>
+          <button onclick="deleteEvent('${event.id}', '${event.image_url}')">削除</button>
+          <div class="tooltip">
+            ${event.description ? `<p>${event.description}</p>` : ""}
+            ${event.image_url ? `<img src="${event.image_url}">` : ""}
+          </div>`;
+        eventList.appendChild(div);
+      });
 
-      yearFilter.innerHTML = `<option value="">全ての年</option>` + [...years].sort().map(y => `<option>${y}</option>`).join('');
-    }
+      yearFilter.innerHTML = `<option value="">全ての年</option>` + [...years].sort().map(y => `<option>${y}</option>`).join('');
+    }
 
-    async function deleteEvent(id, imageUrl) {
-      if (imageUrl) {
-        const path = imageUrl.split("/").slice(-1)[0];
-        await supabase.storage.from('ytym').remove([path]);
-      }
-      await supabase.from('events').delete().eq('id', id);
-      loadEvents();
-    }
+    async function deleteEvent(id, imageUrl) {
+      if (imageUrl) {
+        const path = decodeURIComponent(new URL(imageUrl).pathname.split('/').slice(-1)[0]);
+        await supabase.storage.from('ytym').remove([path]);
+      }
+      await supabase.from('events').delete().eq('id', id);
+      loadEvents();
+    }
 
-    async function editEvent(id) {
-      const { data: [event] } = await supabase.from('events').select('*').eq('id', id);
-      const title = prompt("タイトル", event.title);
-      if (!title) return;
-      const date = prompt("日付", event.date);
-      const description = prompt("詳細", event.description || "");
-      await supabase.from('events').update({ title, date, description }).eq('id', id);
-      loadEvents();
-    }
+    async function editEvent(id) {
+      const { data: [event] } = await supabase.from('events').select('*').eq('id', id);
+      const title = prompt("タイトル", event.title);
+      if (!title) return;
+      const date = prompt("日付", event.date);
+      const description = prompt("詳細", event.description || "");
+      await supabase.from('events').update({ title, date, description }).eq('id', id);
+      loadEvents();
+    }
 
-    searchBox.oninput = loadEvents;
-    yearFilter.onchange = loadEvents;
+    searchBox.oninput = loadEvents;
+    yearFilter.onchange = loadEvents;
 
-    document.addEventListener('click', e => {
-      if (!e.target.closest('.event')) {
-        document.querySelectorAll('.tooltip').forEach(t => t.style.display = 'none');
-      } else {
-        const tooltip = e.target.closest('.event').querySelector('.tooltip');
-        if (tooltip) tooltip.style.display = 'block';
-      }
-    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.event')) {
+        document.querySelectorAll('.tooltip').forEach(t => t.style.display = 'none');
+      } else {
+        const tooltip = e.target.closest('.event').querySelector('.tooltip');
+        if (tooltip) tooltip.style.display = 'block';
+      }
+    });
 
-    window.onload = () => {
-      const url = encodeURIComponent(location.href);
-      document.getElementById("twitter").href = `https://twitter.com/share?url=${url}`;
-      document.getElementById("facebook").href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-      document.getElementById("line").href = `https://social-plugins.line.me/lineit/share?url=${url}`;
-      loadEvents();
-    };
-  </script>
+    window.onload = () => {
+      const url = encodeURIComponent(location.href);
+      document.getElementById("twitter").href = `https://twitter.com/share?url=${url}`;
+      document.getElementById("facebook").href = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+      document.getElementById("line").href = `https://social-plugins.line.me/lineit/share?url=${url}`;
+      loadEvents();
+    };
+  </script>
 </body>
 </html>
