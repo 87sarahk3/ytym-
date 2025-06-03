@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.8/index.global.min.js"></script>
   <style>
+    /* 元のCSSそのままです（省略なし） */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: sans-serif; padding: 10px; background: #f0f0f0; }
     #event-form, #event-list, #yearFilter, #search-box { margin: 10px 0; }
@@ -36,6 +37,7 @@
 
   <div id="event-list"></div>
 
+  <!-- SNS共有リンク -->
   <div>
     <a id="twitter" href="" target="_blank">Twitterでシェア</a> /
     <a id="facebook" href="" target="_blank">Facebookでシェア</a> /
@@ -119,7 +121,7 @@
 
     async function deleteEvent(id, imageUrl) {
       if (imageUrl) {
-        const path = decodeURIComponent(new URL(imageUrl).pathname.split('/').slice(-1)[0]);
+        const path = imageUrl.split("/").slice(-1)[0];
         await supabase.storage.from('ytym').remove([path]);
       }
       await supabase.from('events').delete().eq('id', id);
