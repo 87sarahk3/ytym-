@@ -29,15 +29,29 @@ function createMonthBoxes() {
     container.appendChild(box);
   }
 
-  // スマホ用にboxの高さを調整
-  if (window.innerWidth <= 768) {
-    document.querySelectorAll('.month-box').forEach(box => {
-      box.style.width = '100%';
-      box.style.aspectRatio = '1 / 1';
-      box.style.maxWidth = 'none';
-    });
-  }
+  adjustMonthBoxSize();
 }
+
+function adjustMonthBoxSize() {
+  const isMobile = window.innerWidth <= 768;
+  const boxes = document.querySelectorAll('.month-box');
+  boxes.forEach(box => {
+    if (isMobile) {
+      const screenWidth = window.innerWidth;
+      const margin = 32; // paddingとgapを考慮
+      const columnCount = 3;
+      const width = (screenWidth - margin) / columnCount;
+      box.style.width = `${width}px`;
+      box.style.height = `${width}px`;
+    } else {
+      box.style.width = '';
+      box.style.height = '';
+    }
+  });
+}
+
+window.addEventListener('resize', adjustMonthBoxSize);
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   createMonthBoxes();
