@@ -1,4 +1,3 @@
-// script.js
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
@@ -37,21 +36,16 @@ function adjustMonthBoxSize() {
   const boxes = document.querySelectorAll('.month-box');
   boxes.forEach(box => {
     if (isMobile) {
-      const screenWidth = window.innerWidth;
-      const margin = 32; // paddingとgapを考慮
-      const columnCount = 3;
-      const width = (screenWidth - margin) / columnCount;
-      box.style.width = `${width}px`;
-      box.style.height = `${width}px`;
-    } else {
       box.style.width = '';
       box.style.height = '';
+    } else {
+      box.style.width = '150px';
+      box.style.height = '150px';
     }
   });
 }
 
 window.addEventListener('resize', adjustMonthBoxSize);
-
 
 document.addEventListener('DOMContentLoaded', async () => {
   createMonthBoxes();
