@@ -4,7 +4,86 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ytym年表</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js">
+    const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuam1kYnV3cHR5c3F3anRvdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwNjgzNTYsImV4cCI6MjA2MzY0NDM1Nn0.Xk4r6cjgirCg7vRVr_K-JHA9xuA_owpzpV98GGOAExI';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function loadEvents() {
+      const { data, error } = await supabase.from('ytym').select('*').order('date', { ascending: true });
+      if (error) {
+        alert('読み込み失敗: ' + error.message);
+        return;
+      }
+      const container = document.getElementById('calContainer');
+      container.innerHTML = '';
+
+      for (let m = 1; m <= 12; m++) {
+        const box = document.createElement('div');
+        box.className = 'month-box';
+
+        const title = document.createElement('div');
+        title.className = 'month-title';
+        title.textContent = `${m}月`;
+
+        const grid = document.createElement('div');
+        grid.className = 'dot-grid';
+        grid.id = `month-${m}`;
+        grid.style.position = 'relative';
+
+        const events = data.filter(ev => new Date(ev.date).getMonth() + 1 === m);
+        const byDay = {};
+        events.forEach(ev => {
+          const day = new Date(ev.date).getDate();
+          if (!byDay[day]) byDay[day] = [];
+          byDay[day].push(ev);
+        });
+
+        for (const [day, list] of Object.entries(byDay)) {
+          list.forEach((ev, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'event-dot';
+            dot.style.position = 'absolute';
+            dot.style.left = `${((day - 1) % 10) * 14 + i * 4}px`;
+            dot.style.top = `${Math.floor((day - 1) / 10) * 14}px`;
+            dot.addEventListener('click', (e) => {
+              e.stopPropagation();
+              showTooltip(ev);
+            });
+            grid.appendChild(dot);
+          });
+        }
+
+        box.appendChild(title);
+        box.appendChild(grid);
+        container.appendChild(box);
+      }
+    }
+
+    function showTooltip(ev) {
+      const tooltip = document.getElementById('tooltip');
+      const files = (ev.file_url || '').split(',').filter(f => f.trim());
+      const mediaHtml = files.map(fileUrl =>
+        fileUrl.match(/\.(mp4|webm)$/i)
+          ? `<video src="${fileUrl}" controls style="width:100%;border-radius:6px;margin-top:6px;"></video>`
+          : `<img src="${fileUrl}" style="width:100%;border-radius:6px;margin-top:6px;">`
+      ).join('');
+      tooltip.innerHTML = `
+        <div class="tooltip-content">
+          <strong>${ev.title}</strong><br>
+          <small>${ev.date}</small><br>
+          <p>${ev.details}</p>
+          ${mediaHtml}
+          <button onclick="editEvent(${ev.id})">編集</button>
+          <button onclick="if(confirm('本当に削除しますか？')) deleteEvent(${ev.id})">削除</button>
+        </div>`;
+      tooltip.style.display = 'block';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadEvents();
+    });
+  </script>
   <link rel="stylesheet" href="style.css" />
   <style>
     .image-item {
