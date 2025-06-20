@@ -186,3 +186,34 @@ h1 {
     transform: none;
   }
 }
+@media screen and (max-width: 768px) {
+  .calendar-container {
+    grid-template-columns: repeat(3, 1fr); /* 横3列 */
+    gap: 10px;
+    padding: 0 10px;
+  }
+
+  .month-box {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .tooltip {
+    max-width: 90%;
+    left: 5%;
+    transform: none;
+  }
+
+  #modify-modal {
+    width: 90%;
+    left: 5%;
+    transform: none;
+  }
+
+  #ytym-form {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 10px;
+  }
+}
