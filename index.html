@@ -6,33 +6,6 @@
   <title>ytym年表</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    .image-item {
-      display: inline-block;
-      margin: 4px;
-      position: relative;
-    }
-    .image-item img, .image-item video {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 6px;
-      cursor: move;
-    }
-    .delete-thumb {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      font-size: 12px;
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
-  </style>
 </head>
 <body>
   <h1>ytym年表</h1>
@@ -41,7 +14,7 @@
     <input type="date" id="ytym-date" required />
     <input type="text" id="ytym-title" placeholder="タイトル" required />
     <textarea id="ytym-details" placeholder="備考など（任意）"></textarea>
-    <input type="file" id="event-image" accept="image/*,video/*" multiple />
+    <input type="file" id="event-image" accept="image/*,video/*" />
     <div id="image-preview-container"></div>
     <button type="submit">追加</button>
   </form>
@@ -51,7 +24,6 @@
       <option value="all">すべての年</option>
     </select>
     <input type="text" id="search-input" placeholder="検索キーワード" />
-    <button id="search-button">検索</button>
   </div>
 
   <div class="calendar-wrapper">
@@ -63,251 +35,15 @@
     <input type="date" id="modify-date" />
     <input type="text" id="modify-title" />
     <textarea id="modify-details"></textarea>
-    <input type="file" id="modify-image" accept="image/*,video/*" multiple />
+    <input type="file" id="modify-image" accept="image/*,video/*" />
     <div id="modify-image-preview-container"></div>
-    <button id="modify-save-btn">保存</button>
-    <button id="modify-cancel-btn">キャンセル</button>
+    <button id="modify-save-btn" onclick="saveModifiedEvent()">保存</button>
+    <button id="modify-cancel-btn" onclick="closeModifyModal()">キャンセル</button>
   </div>
 
   <div class="tooltip" id="tooltip"></div>
   <div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10;"></div>
 
-  <script>
-    const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJI...（省略可）';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    let ytymEvents = [];
-    let currentEditId = null;
-    let currentEditImages = [];
-
-    document.getElementById('search-button').addEventListener('click', () => {
-      const keyword = document.getElementById('search-input').value.toLowerCase();
-      const selectedYear = document.getElementById('yearFilter').value;
-      const filtered = ytymEvents.filter(ev => {
-        const matchKeyword = ev.title.toLowerCase().includes(keyword) || (ev.details || '').toLowerCase().includes(keyword);
-        const matchYear = selectedYear === 'all' || new Date(ev.date).getFullYear().toString() === selectedYear;
-        return matchKeyword && matchYear;
-      });
-      renderFilteredDots(filtered);
-    });
-
-    async function populateYearFilter() {
-      const years = [...new Set(ytymEvents.map(ev => new Date(ev.date).getFullYear().toString()))];
-      const select = document.getElementById('yearFilter');
-      select.innerHTML = '<option value="all">すべての年</option>' + years.sort().map(y => `<option value="${y}">${y}</option>`).join('');
-    }
-
-    async function handleFormSubmit(e) {
-      e.preventDefault();
-      const date = document.getElementById('ytym-date').value;
-      const title = document.getElementById('ytym-title').value;
-      const details = document.getElementById('ytym-details').value;
-      const files = document.getElementById('event-image').files;
-      let fileUrls = [];
-
-      for (const file of files) {
-        const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-        const { error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
-        if (error) {
-          alert('アップロード失敗: ' + error.message);
-          return;
-        }
-        const url = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
-        fileUrls.push(url);
-      }
-
-      const { error: insertError } = await supabase.from('ytym').insert([{ date, title, details, file_url: fileUrls.join(',') }]);
-      if (insertError) {
-        alert('登録失敗: ' + insertError.message);
-        return;
-      }
-      document.getElementById('ytym-form').reset();
-      await loadEvents();
-    }
-
-    async function loadEvents() {
-      const { data, error } = await supabase.from('ytym').select('*').order('date', { ascending: true });
-      if (error) {
-        alert('読み込み失敗: ' + error.message);
-        return;
-      }
-      ytymEvents = data;
-      await populateYearFilter();
-      renderFilteredDots(ytymEvents);
-    }
-
-    function renderFilteredDots(events) {
-      const container = document.getElementById('calContainer');
-      container.innerHTML = '';
-      for (let m = 1; m <= 12; m++) {
-        const box = document.createElement('div');
-        box.className = 'month-box';
-        const title = document.createElement('div');
-        title.className = 'month-title';
-        title.textContent = `${m}月`;
-        const grid = document.createElement('div');
-        grid.className = 'dot-grid';
-        grid.id = `month-${m}`;
-        grid.style.position = 'relative';
-
-        const monthEvents = events.filter(ev => new Date(ev.date).getMonth() + 1 === m);
-        const byDay = {};
-        monthEvents.forEach(ev => {
-          const day = new Date(ev.date).getDate();
-          if (!byDay[day]) byDay[day] = [];
-          byDay[day].push(ev);
-        });
-
-        for (const [day, list] of Object.entries(byDay)) {
-          list.forEach((ev, i) => {
-            const dot = document.createElement('div');
-            dot.className = 'event-dot';
-            dot.style.position = 'absolute';
-            dot.style.left = `${((day - 1) % 10) * 14 + i * 4}px`;
-            dot.style.top = `${Math.floor((day - 1) / 10) * 14}px`;
-            dot.addEventListener('click', (e) => {
-              e.stopPropagation();
-              showTooltip(ev.date);
-            });
-            grid.appendChild(dot);
-          });
-        }
-        box.appendChild(title);
-        box.appendChild(grid);
-        container.appendChild(box);
-      }
-    }
-
-    function showTooltip(dateStr) {
-      const tooltip = document.getElementById('tooltip');
-      const list = ytymEvents.filter(ev => ev.date === dateStr);
-      tooltip.innerHTML = list.map(ev => {
-        const files = (ev.file_url || '').split(',').filter(f => f.trim());
-        const mediaHtml = files.map(fileUrl =>
-          fileUrl.match(/\.(mp4|webm)$/i)
-            ? `<video src="${fileUrl}" controls style="width:100%;border-radius:6px;margin-top:6px;"></video>`
-            : `<img src="${fileUrl}" style="width:100%;border-radius:6px;margin-top:6px;">`
-        ).join('');
-        return `
-          <div class="tooltip-content">
-            <strong>${ev.title}</strong><br>
-            <small>${ev.date}</small><br>
-            <p>${ev.details}</p>
-            ${mediaHtml}
-            <button onclick="editEvent(${ev.id})">編集</button>
-            <button onclick="if(confirm('本当に削除しますか？')) deleteEvent(${ev.id})">削除</button>
-          </div>`;
-      }).join('');
-      tooltip.style.display = 'block';
-    }
-
-    async function deleteEvent(id) {
-      const { error } = await supabase.from('ytym').delete().eq('id', id);
-      if (error) {
-        alert('削除失敗: ' + error.message);
-        return;
-      }
-      document.getElementById('tooltip').style.display = 'none';
-      await loadEvents();
-    }
-
-    function editEvent(id) {
-      const ev = ytymEvents.find(e => e.id === id);
-      if (!ev) return;
-      document.getElementById('modify-date').value = ev.date;
-      document.getElementById('modify-title').value = ev.title;
-      document.getElementById('modify-details').value = ev.details;
-      currentEditId = id;
-      currentEditImages = (ev.file_url || '').split(',').filter(f => f.trim());
-      renderImagePreviews();
-      document.getElementById('modify-modal').style.display = 'block';
-    }
-
-    function renderImagePreviews() {
-      const container = document.getElementById('modify-image-preview-container');
-      container.innerHTML = '';
-      currentEditImages.forEach((url, index) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'image-item';
-        wrapper.draggable = true;
-        wrapper.dataset.index = index;
-
-        const ext = url.split('.').pop().toLowerCase();
-        if (['mp4', 'webm'].includes(ext)) {
-          const vid = document.createElement('video');
-          vid.src = url;
-          vid.controls = true;
-          wrapper.appendChild(vid);
-        } else {
-          const img = document.createElement('img');
-          img.src = url;
-          wrapper.appendChild(img);
-        }
-
-        const btn = document.createElement('button');
-        btn.textContent = '×';
-        btn.className = 'delete-thumb';
-        btn.onclick = () => {
-          currentEditImages.splice(index, 1);
-          renderImagePreviews();
-        };
-        wrapper.appendChild(btn);
-
-        wrapper.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', index));
-        wrapper.addEventListener('dragover', e => e.preventDefault());
-        wrapper.addEventListener('drop', e => {
-          e.preventDefault();
-          const from = parseInt(e.dataTransfer.getData('text/plain'));
-          const to = index;
-          const moved = currentEditImages.splice(from, 1)[0];
-          currentEditImages.splice(to, 0, moved);
-          renderImagePreviews();
-        });
-
-        container.appendChild(wrapper);
-      });
-    }
-
-    async function saveModifiedEvent() {
-      if (!currentEditId) return;
-      const date = document.getElementById('modify-date').value;
-      const title = document.getElementById('modify-title').value;
-      const details = document.getElementById('modify-details').value;
-      const files = document.getElementById('modify-image').files;
-
-      for (const file of files) {
-        const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-        const { error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
-        if (error) {
-          alert('アップロード失敗: ' + error.message);
-          return;
-        }
-        const url = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
-        currentEditImages.push(url);
-      }
-
-      const updateObj = { date, title, details, file_url: currentEditImages.join(',') };
-      const { error } = await supabase.from('ytym').update(updateObj).eq('id', currentEditId);
-      if (error) {
-        alert('更新失敗: ' + error.message);
-        return;
-      }
-      document.getElementById('modify-modal').style.display = 'none';
-      document.getElementById('tooltip').style.display = 'none';
-      currentEditId = null;
-      await loadEvents();
-    }
-
-    function closeModifyModal() {
-      document.getElementById('modify-modal').style.display = 'none';
-      currentEditId = null;
-    }
-
-    document.getElementById('ytym-form').addEventListener('submit', handleFormSubmit);
-    document.getElementById('modify-save-btn').addEventListener('click', saveModifiedEvent);
-    document.getElementById('modify-cancel-btn').addEventListener('click', closeModifyModal);
-    loadEvents();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
