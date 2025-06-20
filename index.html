@@ -14,7 +14,7 @@
     <input type="date" id="ytym-date" required />
     <input type="text" id="ytym-title" placeholder="タイトル" required />
     <textarea id="ytym-details" placeholder="備考など（任意）"></textarea>
-    <input type="file" id="event-image" accept="image/*,video/*" />
+    <input type="file" id="event-image" accept="image/*,video/*" multiple />
     <div id="image-preview-container"></div>
     <button type="submit">追加</button>
   </form>
@@ -35,7 +35,7 @@
     <input type="date" id="modify-date" />
     <input type="text" id="modify-title" />
     <textarea id="modify-details"></textarea>
-    <input type="file" id="modify-image" accept="image/*,video/*" />
+    <input type="file" id="modify-image" accept="image/*,video/*" multiple />
     <div id="modify-image-preview-container"></div>
     <button id="modify-save-btn" onclick="saveModifiedEvent()">保存</button>
     <button id="modify-cancel-btn" onclick="closeModifyModal()">キャンセル</button>
