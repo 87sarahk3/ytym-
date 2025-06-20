@@ -57,8 +57,8 @@ h1 {
   padding: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   position: relative;
-  width: 150px;
-  height: 150px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -83,6 +83,7 @@ h1 {
   height: 100%;
   position: relative;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .event-dot {
@@ -180,9 +181,7 @@ h1 {
 
   .month-box {
     width: 100%;
-    height: 30vw;
-    max-height: 150px;
-    min-height: 100px;
+    aspect-ratio: 1 / 1;
     padding: 10px;
     box-sizing: border-box;
   }
@@ -190,8 +189,8 @@ h1 {
   .dot-grid {
     width: 100%;
     height: 100%;
-    position: relative;
     overflow: hidden;
+    position: relative;
   }
 
   .event-dot {
@@ -212,7 +211,19 @@ h1 {
   }
 }
 
-/* モバイルでタップ以外の場所でツールチップを閉じる */
+/* タップ外でツールチップを閉じる */
 body:has(.tooltip[style*="display: block"]) {
   touch-action: manipulation;
+  position: relative;
+}
+
+body:has(.tooltip[style*="display: block"])::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 998;
+  background: transparent;
 }
