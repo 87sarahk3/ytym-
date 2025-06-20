@@ -28,6 +28,15 @@ function createMonthBoxes() {
     box.appendChild(grid);
     container.appendChild(box);
   }
+
+  // スマホ用にboxの高さを調整
+  if (window.innerWidth <= 768) {
+    document.querySelectorAll('.month-box').forEach(box => {
+      box.style.width = '100%';
+      box.style.aspectRatio = '1 / 1';
+      box.style.maxWidth = 'none';
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
