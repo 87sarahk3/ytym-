@@ -54,18 +54,33 @@
         const matchYear = year === 'all' || new Date(ev.date).getFullYear().toString() === year;
         return matchKeyword && matchYear;
       });
-      renderDots(filtered);
+      if (window.renderDots) {
+        window.renderDots(filtered);
+      }
     });
 
     function deleteEvent(id) {
       if (!confirm('本当に削除しますか？')) return;
-      supabase.from('ytym').delete().eq('id', id).then(({ error }) => {
+      window.supabase.from('ytym').delete().eq('id', id).then(({ error }) => {
         if (error) {
           alert('削除失敗: ' + error.message);
         } else {
           alert('削除しました');
-          loadEvents();
+          document.getElementById('tooltip').style.display = 'none';
+          if (window.loadEvents) window.loadEvents();
         }
+      });
+    }
+
+    function populateYearOptions() {
+      const years = [...new Set(window.ytymEvents.map(ev => new Date(ev.date).getFullYear()))].sort();
+      const yearFilter = document.getElementById('yearFilter');
+      yearFilter.innerHTML = '<option value="all">すべての年</option>';
+      years.forEach(year => {
+        const opt = document.createElement('option');
+        opt.value = year;
+        opt.textContent = year + '年';
+        yearFilter.appendChild(opt);
       });
     }
   </script>
