@@ -70,6 +70,19 @@
         document.body.classList.remove('mobile');
       }
     });
+  
+    async function deleteEvent(id) {
+      console.log('[削除実行] ID:', id);
+      const { error } = await supabase.from('ytym').delete().eq('id', id);
+      if (error) {
+        console.error('[削除エラー]', error);
+        alert('削除失敗: ' + error.message);
+        return;
+      }
+      console.log('[削除成功] ID:', id);
+      document.getElementById('tooltip').style.display = 'none';
+      await loadEvents();
+    }
   </script>
 </body>
 </html>
