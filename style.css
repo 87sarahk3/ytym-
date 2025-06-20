@@ -193,6 +193,17 @@ h1 {
     max-height: 80vh;
     overflow-y: auto;
   }
+
+  .month-box {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .dot-grid {
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: center;
+  }
 }
 
 /* Tap outside tooltip to close - overlay layer */
