@@ -45,8 +45,6 @@ async function handleFormSubmit(e) {
   const details = document.getElementById('ytym-details').value;
   const file = document.getElementById('event-image').files[0];
 
-  console.log("送信するデータ", { date, title, details, file });
-
   let fileUrl = '';
   if (file) {
     const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
@@ -124,6 +122,7 @@ function showTooltip(dateStr) {
     </div>
   `).join('');
   tooltip.style.display = 'block';
+  document.body.classList.add('tooltip-active');
 }
 
 function editEvent(id) {
@@ -160,6 +159,7 @@ async function saveModifiedEvent() {
     return;
   }
   document.getElementById('modify-modal').style.display = 'none';
+  document.body.classList.remove('tooltip-active');
   await loadEvents();
 }
 
@@ -169,6 +169,7 @@ async function deleteEvent(id) {
     alert('削除失敗: ' + error.message);
     return;
   }
+  document.body.classList.remove('tooltip-active');
   await loadEvents();
 }
 
@@ -178,7 +179,9 @@ function closeModifyModal() {
 }
 
 window.addEventListener('click', e => {
+  const tooltip = document.getElementById('tooltip');
   if (!e.target.closest('.event-dot') && !e.target.closest('.tooltip-content') && !e.target.closest('#modify-modal')) {
-    document.getElementById('tooltip').style.display = 'none';
+    tooltip.style.display = 'none';
+    document.body.classList.remove('tooltip-active');
   }
 });
