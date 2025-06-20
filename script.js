@@ -60,20 +60,21 @@ async function handleFormSubmit(e) {
   const date = document.getElementById('ytym-date').value;
   const title = document.getElementById('ytym-title').value;
   const details = document.getElementById('ytym-details').value;
-  const file = document.getElementById('event-image').files[0];
+  const files = document.getElementById('event-image').files;
 
-  let fileUrl = '';
-  if (file) {
+  const fileUrls = [];
+  for (let file of files) {
     const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
     const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
     if (error) {
       alert('アップロード失敗: ' + error.message);
       return;
     }
-    fileUrl = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
+    const url = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
+    fileUrls.push(url);
   }
 
-  const { error: insertError } = await supabase.from('ytym').insert([{ date, title, details, file_url: fileUrl }]);
+  const { error: insertError } = await supabase.from('ytym').insert([{ date, title, details, file_url: JSON.stringify(fileUrls) }]);
   if (insertError) {
     alert('登録失敗: ' + insertError.message);
     return;
@@ -86,22 +87,24 @@ async function handleFormSubmit(e) {
 async function loadEvents() {
   const { data, error } = await supabase.from('ytym').select('*').order('date', { ascending: true });
   if (error) {
-    alert('イベント読み込み失敗: ' + error.message);
+    alert('読み込み失敗: ' + error.message);
     return;
   }
   ytymEvents = data;
   renderDots();
+  populateYearOptions();
 }
 
-function renderDots() {
+function renderDots(filtered = null) {
+  const events = filtered || ytymEvents;
   for (let m = 1; m <= 12; m++) {
     const grid = document.getElementById(`month-${m}`);
     if (!grid) continue;
     grid.innerHTML = '';
 
-    const events = ytymEvents.filter(ev => new Date(ev.date).getMonth() + 1 === m);
+    const monthly = events.filter(ev => new Date(ev.date).getMonth() + 1 === m);
     const byDay = {};
-    events.forEach(ev => {
+    monthly.forEach(ev => {
       const day = new Date(ev.date).getDate();
       if (!byDay[day]) byDay[day] = [];
       byDay[day].push(ev);
@@ -121,27 +124,42 @@ function renderDots() {
         grid.appendChild(dot);
       });
     }
-  }
 }
 
 function showTooltip(dateStr) {
   const tooltip = document.getElementById('tooltip');
   const list = ytymEvents.filter(ev => ev.date === dateStr);
-  tooltip.innerHTML = list.map(ev => `
-    <div class="tooltip-content">
-      <strong>${ev.title}</strong><br>
-      <small>${ev.date}</small><br>
-      <p>${ev.details}</p>
-      ${ev.file_url ?
-        ev.file_url.match(/\.(mp4|webm)$/i) ?
-        `<video src="${ev.file_url}" controls style="width:100%;border-radius:6px;"></video>` :
-        `<img src="${ev.file_url}" style="width:100%;border-radius:6px;">`
-      : ''}
-      <button onclick="editEvent(${ev.id})">編集</button>
-      <button onclick="deleteEvent(${ev.id})">削除</button>
-    </div>
-  `).join('');
+  tooltip.innerHTML = list.map(ev => {
+    const files = ev.file_url ? JSON.parse(ev.file_url) : [];
+    const mediaHTML = files.map(url => {
+      return url.match(/\.(mp4|webm)$/i)
+        ? `<video src="${url}" controls style="width:100%;border-radius:6px;"></video>`
+        : `<img src="${url}" style="width:100%;border-radius:6px;">`;
+    }).join('');
+    return `
+      <div class="tooltip-content">
+        <strong>${ev.title}</strong><br>
+        <small>${ev.date}</small><br>
+        <p>${ev.details}</p>
+        ${mediaHTML}
+        <button onclick="editEvent(${ev.id})">編集</button>
+        <button onclick="deleteEvent(${ev.id})">削除</button>
+      </div>
+    `;
+  }).join('');
   tooltip.style.display = 'block';
+}
+
+function populateYearOptions() {
+  const years = [...new Set(ytymEvents.map(ev => new Date(ev.date).getFullYear()))].sort();
+  const select = document.getElementById('yearFilter');
+  select.innerHTML = '<option value="all">すべての年</option>';
+  years.forEach(y => {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = `${y}年`;
+    select.appendChild(opt);
+  });
 }
 
 document.addEventListener('click', (e) => {
@@ -169,40 +187,44 @@ async function saveModifiedEvent() {
   const date = document.getElementById('modify-date').value;
   const title = document.getElementById('modify-title').value;
   const details = document.getElementById('modify-details').value;
-  const file = document.getElementById('modify-image').files[0];
-  let fileUrl = '';
-  if (file) {
-    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-    const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
-    if (error) {
-      alert('ファイル更新失敗: ' + error.message);
-      return;
+  const files = document.getElementById('modify-image').files;
+
+  let fileUrls = [];
+  if (files.length > 0) {
+    for (let file of files) {
+      const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
+      const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
+      if (error) {
+        alert('アップロード失敗: ' + error.message);
+        return;
+      }
+      const url = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
+      fileUrls.push(url);
     }
-    fileUrl = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
   }
+
   const updateObj = { date, title, details };
-  if (fileUrl) updateObj.file_url = fileUrl;
+  if (fileUrls.length > 0) updateObj.file_url = JSON.stringify(fileUrls);
+
   const { error } = await supabase.from('ytym').update(updateObj).eq('id', currentEditId);
   if (error) {
     alert('更新失敗: ' + error.message);
     return;
   }
+
   document.getElementById('modify-modal').style.display = 'none';
   document.getElementById('tooltip').style.display = 'none';
   await loadEvents();
 }
 
 async function deleteEvent(id) {
+  if (!confirm('本当に削除しますか？')) return;
   const { error } = await supabase.from('ytym').delete().eq('id', id);
   if (error) {
     alert('削除失敗: ' + error.message);
     return;
   }
+  alert('削除しました');
   document.getElementById('tooltip').style.display = 'none';
   await loadEvents();
-}
-
-function closeModifyModal() {
-  document.getElementById('modify-modal').style.display = 'none';
-  currentEditId = null;
 }
