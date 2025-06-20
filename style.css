@@ -174,7 +174,6 @@ h1 {
 
   .month-box {
     width: 100%;
-    height: auto;
     aspect-ratio: 1 / 1;
     max-height: none;
   }
@@ -204,11 +203,3 @@ body:has(.tooltip[style*="display: block"])::after {
   z-index: 998;
   background: transparent;
 }
-
-/* Hide tooltip when clicking outside */
-document.addEventListener('click', function (e) {
-  const tooltip = document.querySelector('.tooltip');
-  if (tooltip && tooltip.style.display === 'block' && !tooltip.contains(e.target)) {
-    tooltip.style.display = 'none';
-  }
-});
