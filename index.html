@@ -45,6 +45,31 @@
   <div class="tooltip" id="tooltip"></div>
   <div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10;"></div>
 
+  <script>
+    document.getElementById('search-button').addEventListener('click', () => {
+      const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+      const year = document.getElementById('yearFilter').value;
+      const filtered = window.ytymEvents.filter(ev => {
+        const matchKeyword = ev.title.toLowerCase().includes(keyword) || ev.details.toLowerCase().includes(keyword);
+        const matchYear = year === 'all' || new Date(ev.date).getFullYear().toString() === year;
+        return matchKeyword && matchYear;
+      });
+      renderDots(filtered);
+    });
+
+    function deleteEvent(id) {
+      if (!confirm('本当に削除しますか？')) return;
+      supabase.from('ytym').delete().eq('id', id).then(({ error }) => {
+        if (error) {
+          alert('削除失敗: ' + error.message);
+        } else {
+          alert('削除しました');
+          loadEvents();
+        }
+      });
+    }
+  </script>
+
   <script src="script.js"></script>
 </body>
 </html>
