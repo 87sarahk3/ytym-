@@ -197,6 +197,19 @@ h1 {
     width: 100%;
     max-width: 100%;
     height: auto;
+    min-height: 120px;
+    box-sizing: border-box;
+  }
+
+  .dot-grid {
+    height: auto;
+    min-height: 60px;
+    position: relative;
+  }
+
+  .event-dot {
+    width: 8px;
+    height: 8px;
   }
 
   .tooltip {
