@@ -116,6 +116,10 @@ h1 {
   display: none;
 }
 
+.tooltip-content {
+  margin-bottom: 1em;
+}
+
 .tooltip-content img,
 .tooltip-content video {
   margin-top: 6px;
@@ -136,6 +140,8 @@ h1 {
   z-index: 1000;
   width: 400px;
   max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 #modify-modal input,
@@ -172,6 +178,16 @@ h1 {
     max-width: 94%;
     left: 3%;
     transform: none;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  #modify-modal {
+    width: 90%;
+    left: 5%;
+    transform: none;
+    max-height: 80vh;
+    overflow-y: auto;
   }
 }
 
