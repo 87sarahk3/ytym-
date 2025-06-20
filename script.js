@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('ytym-form').addEventListener('submit', handleFormSubmit);
   document.getElementById('modify-save-btn').addEventListener('click', saveModifiedEvent);
   document.getElementById('modify-cancel-btn').addEventListener('click', closeModifyModal);
-  document.getElementById('overlay').addEventListener('click', hideTooltip);
   await loadEvents();
 });
 
@@ -45,6 +44,8 @@ async function handleFormSubmit(e) {
   const title = document.getElementById('ytym-title').value;
   const details = document.getElementById('ytym-details').value;
   const file = document.getElementById('event-image').files[0];
+
+  console.log("送信するデータ", { date, title, details, file });
 
   let fileUrl = '';
   if (file) {
@@ -98,10 +99,7 @@ function renderDots() {
         dot.style.position = 'absolute';
         dot.style.left = `${((day - 1) % 10) * 14 + i * 4}px`;
         dot.style.top = `${Math.floor((day - 1) / 10) * 14}px`;
-        dot.onclick = (e) => {
-          e.stopPropagation();
-          showTooltip(ev.date);
-        };
+        dot.onclick = () => showTooltip(ev.date);
         grid.appendChild(dot);
       });
     }
@@ -110,7 +108,6 @@ function renderDots() {
 
 function showTooltip(dateStr) {
   const tooltip = document.getElementById('tooltip');
-  const overlay = document.getElementById('overlay');
   const list = ytymEvents.filter(ev => ev.date === dateStr);
   tooltip.innerHTML = list.map(ev => `
     <div class="tooltip-content">
@@ -127,14 +124,6 @@ function showTooltip(dateStr) {
     </div>
   `).join('');
   tooltip.style.display = 'block';
-  overlay.style.display = 'block';
-  document.body.classList.add('tooltip-active');
-}
-
-function hideTooltip() {
-  document.getElementById('tooltip').style.display = 'none';
-  document.getElementById('overlay').style.display = 'none';
-  document.body.classList.remove('tooltip-active');
 }
 
 function editEvent(id) {
@@ -171,7 +160,6 @@ async function saveModifiedEvent() {
     return;
   }
   document.getElementById('modify-modal').style.display = 'none';
-  hideTooltip();
   await loadEvents();
 }
 
@@ -181,7 +169,6 @@ async function deleteEvent(id) {
     alert('削除失敗: ' + error.message);
     return;
   }
-  hideTooltip();
   await loadEvents();
 }
 
@@ -191,9 +178,7 @@ function closeModifyModal() {
 }
 
 window.addEventListener('click', e => {
-  if (!e.target.closest('.event-dot') &&
-      !e.target.closest('.tooltip-content') &&
-      !e.target.closest('#modify-modal')) {
-    hideTooltip();
+  if (!e.target.closest('.event-dot') && !e.target.closest('.tooltip-content') && !e.target.closest('#modify-modal')) {
+    document.getElementById('tooltip').style.display = 'none';
   }
 });
