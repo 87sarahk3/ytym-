@@ -4,129 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ytym年表</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js">
-    const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuam1kYnV3cHR5c3F3anRvdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwNjgzNTYsImV4cCI6MjA2MzY0NDM1Nn0.Xk4r6cjgirCg7vRVr_K-JHA9xuA_owpzpV98GGOAExI';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    async function loadEvents() {
-      const { data, error } = await supabase.from('ytym').select('*').order('date', { ascending: true });
-      if (error) {
-        alert('読み込み失敗: ' + error.message);
-        return;
-      }
-      const container = document.getElementById('calContainer');
-      container.innerHTML = '';
-
-      for (let m = 1; m <= 12; m++) {
-        const box = document.createElement('div');
-        box.className = 'month-box';
-
-        const title = document.createElement('div');
-        title.className = 'month-title';
-        title.textContent = `${m}月`;
-
-        const grid = document.createElement('div');
-        grid.className = 'dot-grid';
-        grid.id = `month-${m}`;
-        grid.style.position = 'relative';
-
-        const events = data.filter(ev => new Date(ev.date).getMonth() + 1 === m);
-        const byDay = {};
-        events.forEach(ev => {
-          const day = new Date(ev.date).getDate();
-          if (!byDay[day]) byDay[day] = [];
-          byDay[day].push(ev);
-        });
-
-        for (const [day, list] of Object.entries(byDay)) {
-          list.forEach((ev, i) => {
-            const dot = document.createElement('div');
-            dot.className = 'event-dot';
-            dot.style.position = 'absolute';
-            dot.style.left = `${((day - 1) % 10) * 14 + i * 4}px`;
-            dot.style.top = `${Math.floor((day - 1) / 10) * 14}px`;
-            dot.addEventListener('click', (e) => {
-              e.stopPropagation();
-              showTooltip(ev);
-            });
-            grid.appendChild(dot);
-          });
-        }
-
-        box.appendChild(title);
-        box.appendChild(grid);
-        container.appendChild(box);
-      }
-    }
-
-    function showTooltip(ev) {
-      const tooltip = document.getElementById('tooltip');
-      const files = (ev.file_url || '').split(',').filter(f => f.trim());
-      const mediaHtml = files.map(fileUrl =>
-        fileUrl.match(/\.(mp4|webm)$/i)
-          ? `<video src="${fileUrl}" controls style="width:100%;border-radius:6px;margin-top:6px;"></video>`
-          : `<img src="${fileUrl}" style="width:100%;border-radius:6px;margin-top:6px;">`
-      ).join('');
-      tooltip.innerHTML = `
-        <div class="tooltip-content">
-          <strong>${ev.title}</strong><br>
-          <small>${ev.date}</small><br>
-          <p>${ev.details}</p>
-          ${mediaHtml}
-          <button onclick="editEvent(${ev.id})">編集</button>
-          <button onclick="if(confirm('本当に削除しますか？')) deleteEvent(${ev.id})">削除</button>
-        </div>`;
-      tooltip.style.display = 'block';
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      loadEvents();
-    });
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    .image-item {
-      display: inline-block;
-      margin: 4px;
-      position: relative;
-    }
-    .image-item img, .image-item video {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 6px;
-      cursor: move;
-    }
-    .delete-thumb {
-      position: absolute;
-      top: -6px;
-      right: -6px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      font-size: 12px;
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
-    @media screen and (max-width: 768px) {
-      .calendar-container {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        padding: 0 10px;
-      }
-      .month-box {
-        width: 100%;
-        max-width: 150px;
-        aspect-ratio: 1 / 1;
-        margin: 0 auto;
-        box-sizing: border-box;
-      }
-    }
-  </style>
 </head>
 <body>
   <h1>ytym年表</h1>
@@ -135,7 +14,7 @@
     <input type="date" id="ytym-date" required />
     <input type="text" id="ytym-title" placeholder="タイトル" required />
     <textarea id="ytym-details" placeholder="備考など（任意）"></textarea>
-    <input type="file" id="event-image" accept="image/*,video/*" multiple />
+    <input type="file" id="event-image" accept="image/*,video/*" />
     <div id="image-preview-container"></div>
     <button type="submit">追加</button>
   </form>
@@ -145,7 +24,6 @@
       <option value="all">すべての年</option>
     </select>
     <input type="text" id="search-input" placeholder="検索キーワード" />
-    <button id="search-button">検索</button>
   </div>
 
   <div class="calendar-wrapper">
@@ -157,46 +35,15 @@
     <input type="date" id="modify-date" />
     <input type="text" id="modify-title" />
     <textarea id="modify-details"></textarea>
-    <input type="file" id="modify-image" accept="image/*,video/*" multiple />
+    <input type="file" id="modify-image" accept="image/*,video/*" />
     <div id="modify-image-preview-container"></div>
-    <button id="modify-save-btn">保存</button>
-    <button id="modify-cancel-btn">キャンセル</button>
+    <button id="modify-save-btn" onclick="saveModifiedEvent()">保存</button>
+    <button id="modify-cancel-btn" onclick="closeModifyModal()">キャンセル</button>
   </div>
 
   <div class="tooltip" id="tooltip"></div>
   <div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10;"></div>
 
-  <script>
-    // 追加: tooltip以外を押したら非表示にする
-    document.addEventListener('click', (e) => {
-      const tooltip = document.getElementById('tooltip');
-      if (tooltip.style.display === 'block' && !e.target.closest('.tooltip-content')) {
-        tooltip.style.display = 'none';
-      }
-    });
-
-    // 既存の loadEvents 呼び出しのあとに追加（または loadEvents 内に含める）
-    window.addEventListener('resize', () => {
-      const width = window.innerWidth;
-      if (width <= 768) {
-        document.body.classList.add('mobile');
-      } else {
-        document.body.classList.remove('mobile');
-      }
-    });
-  
-    async function deleteEvent(id) {
-      console.log('[削除実行] ID:', id);
-      const { error } = await supabase.from('ytym').delete().eq('id', id);
-      if (error) {
-        console.error('[削除エラー]', error);
-        alert('削除失敗: ' + error.message);
-        return;
-      }
-      console.log('[削除成功] ID:', id);
-      document.getElementById('tooltip').style.display = 'none';
-      await loadEvents();
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
