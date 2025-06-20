@@ -1,4 +1,4 @@
-/* style.css - Revert desktop layout, preserve mobile layout improvements */
+/* style.css - Keep original desktop layout, improve mobile layout only */
 
 body {
   font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
@@ -175,6 +175,8 @@ h1 {
   .month-box {
     aspect-ratio: 1 / 1;
     min-height: 28vw;
+    width: 100%;
+    height: auto;
   }
 
   .tooltip {
