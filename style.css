@@ -79,6 +79,7 @@ h1 {
   width: 100%;
   flex-grow: 1;
   align-content: flex-start;
+  justify-content: center;
 }
 
 .event-dot {
