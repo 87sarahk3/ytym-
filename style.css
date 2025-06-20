@@ -156,37 +156,9 @@ h1 {
   #ytym-form {
     flex-direction: column;
     align-items: stretch;
-    padding: 10px;
+    padding: 0 10px;
   }
 
-  .calendar-container {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .month-box {
-    width: 100%;
-    height: auto;
-    padding: 12px;
-  }
-
-  .dot-grid {
-    justify-content: center;
-  }
-
-  .tooltip {
-    max-width: 90%;
-    left: 5%;
-    transform: none;
-  }
-
-  #modify-modal {
-    width: 90%;
-    left: 5%;
-    transform: none;
-  }
-}
-@media screen and (max-width: 768px) {
   .calendar-container {
     grid-template-columns: repeat(3, 1fr); /* 横3列 */
     gap: 10px;
@@ -197,13 +169,19 @@ h1 {
     width: 100%;
     max-width: 100%;
     height: auto;
-    min-height: 120px;
+    min-height: 140px;
     box-sizing: border-box;
+  }
+
+  .month-title {
+    font-size: 16px;
+    margin-bottom: 6px;
   }
 
   .dot-grid {
     height: auto;
-    min-height: 60px;
+    min-height: 80px;
+    width: 100%;
     position: relative;
   }
 
@@ -222,11 +200,5 @@ h1 {
     width: 90%;
     left: 5%;
     transform: none;
-  }
-
-  #ytym-form {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0 10px;
   }
 }
