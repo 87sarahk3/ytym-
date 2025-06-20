@@ -228,4 +228,3 @@ async function deleteEvent(id) {
   document.getElementById('tooltip').style.display = 'none';
   await loadEvents();
 }
-}  // ← この閉じ括弧が足りてなかった
