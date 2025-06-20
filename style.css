@@ -173,22 +173,26 @@ h1 {
   }
 
   .month-box {
-    aspect-ratio: 1 / 1;
-    min-height: 28vw;
     width: 100%;
     height: auto;
+    min-height: 28vw;
+    max-height: none;
   }
 
   .tooltip {
     max-width: 94%;
     left: 3%;
     transform: none;
+    max-height: 60vh;
+    overflow-y: auto;
   }
 
   #modify-modal {
     width: 90%;
     left: 5%;
     transform: none;
+    max-height: 80vh;
+    overflow-y: auto;
   }
 }
 
@@ -200,3 +204,11 @@ body:has(.tooltip[style*="display: block"])::after {
   z-index: 998;
   background: transparent;
 }
+
+/* Hide tooltip when clicking outside */
+document.addEventListener('click', function (e) {
+  const tooltip = document.querySelector('.tooltip');
+  if (tooltip && tooltip.style.display === 'block' && !tooltip.contains(e.target)) {
+    tooltip.style.display = 'none';
+  }
+});
