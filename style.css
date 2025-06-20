@@ -1,4 +1,4 @@
-/* style.css - Revised for better mobile layout and scrollable tooltip */
+/* style.css - Revert desktop layout, preserve mobile layout improvements */
 
 body {
   font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
@@ -45,7 +45,7 @@ h1 {
 
 .calendar-container {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: 20px;
   max-width: 1200px;
   margin: auto;
@@ -56,12 +56,14 @@ h1 {
   border-radius: 16px;
   padding: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: relative;
+  width: 150px;
+  height: 150px;
   display: flex;
   flex-direction: column;
   align-items: center;
   box-sizing: border-box;
   overflow: hidden;
-  aspect-ratio: 1 / 1; /* keeps square */
 }
 
 .month-title {
@@ -112,7 +114,7 @@ h1 {
   padding: 15px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   max-width: 400px;
-  max-height: 70vh; /* scrollable */
+  max-height: 70vh;
   overflow-y: auto;
   display: none;
 }
@@ -172,23 +174,19 @@ h1 {
 
   .month-box {
     aspect-ratio: 1 / 1;
-    min-height: 28vw; /* bigger squares */
+    min-height: 28vw;
   }
 
   .tooltip {
     max-width: 94%;
     left: 3%;
     transform: none;
-    max-height: 70vh;
-    overflow-y: auto;
   }
 
   #modify-modal {
     width: 90%;
     left: 5%;
     transform: none;
-    max-height: 80vh;
-    overflow-y: auto;
   }
 }
 
