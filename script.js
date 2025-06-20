@@ -1,3 +1,4 @@
+// script.js
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
@@ -65,7 +66,7 @@ async function handleFormSubmit(e) {
   const fileUrls = [];
   for (let file of files) {
     const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-    const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
+    const { error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
     if (error) {
       alert('アップロード失敗: ' + error.message);
       return;
@@ -124,6 +125,7 @@ function renderDots(filtered = null) {
         grid.appendChild(dot);
       });
     }
+  }
 }
 
 function showTooltip(dateStr) {
@@ -193,7 +195,7 @@ async function saveModifiedEvent() {
   if (files.length > 0) {
     for (let file of files) {
       const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-      const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
+      const { error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
       if (error) {
         alert('アップロード失敗: ' + error.message);
         return;
@@ -228,3 +230,11 @@ async function deleteEvent(id) {
   document.getElementById('tooltip').style.display = 'none';
   await loadEvents();
 }
+
+// グローバルに公開
+window.ytymEvents = ytymEvents;
+window.renderDots = renderDots;
+window.createMonthBoxes = createMonthBoxes;
+window.loadEvents = loadEvents;
+window.populateYearOptions = populateYearOptions;
+window.deleteEvent = deleteEvent;
