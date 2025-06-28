@@ -1,3 +1,4 @@
+// script.js（改善後）
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
@@ -7,202 +8,87 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 let ytymEvents = [];
 let currentEditId = null;
 
-function createMonthBoxes() {
-  const container = document.getElementById('calContainer');
-  container.innerHTML = '';
-  for (let m = 1; m <= 12; m++) {
-    const box = document.createElement('div');
-    box.className = 'month-box';
-
-    const title = document.createElement('div');
-    title.className = 'month-title';
-    title.textContent = `${m}月`;
-
-    const grid = document.createElement('div');
-    grid.className = 'dot-grid';
-    grid.id = `month-${m}`;
-    grid.style.position = 'relative';
-
-    box.appendChild(title);
-    box.appendChild(grid);
-    container.appendChild(box);
-  }
-
-  adjustMonthBoxSize();
+// 投稿取得と表示
+async function loadYtym() {
+  const { data, error } = await supabase.from('ytym').select('*').order('date');
+  if (error) return console.error('読み込みエラー:', error);
+  ytymEvents = data;
+  renderYtym();
 }
 
-function adjustMonthBoxSize() {
-  const isMobile = window.innerWidth <= 768;
-  const boxes = document.querySelectorAll('.month-box');
-  boxes.forEach(box => {
-    if (isMobile) {
-      box.style.width = '';
-      box.style.height = '';
-    } else {
-      box.style.width = '150px';
-      box.style.height = '150px';
-    }
-  });
+function renderYtym() {
+  const container = document.getElementById('ytym-list');
+  container.innerHTML = '';
+  ytymEvents.forEach(event => {
+    const div = document.createElement('div');
+    div.className = 'event';
+    div.innerHTML = `
+      <p><strong>${event.date}</strong>: ${event.title}</p>
+      <p>${event.description}</p>
+      ${event.image_urls ? event.image_urls.map(url => `<img src="${url}" width="100">`).join('') : ''}
+      <button onclick="editYtym('${event.id}')">編集</button>
+      <button onclick="deleteYtym('${event.id}')">削除</button>
+    `;
+    container.appendChild(div);
+  });
 }
 
-window.addEventListener('resize', adjustMonthBoxSize);
+// 新規投稿または編集保存
+async function saveYtym() {
+  const date = document.getElementById('date').value;
+  const title = document.getElementById('title').value;
+  const description = document.getElementById('description').value;
+  const files = document.getElementById('image').files;
 
-document.addEventListener('DOMContentLoaded', async () => {
-  createMonthBoxes();
-  document.getElementById('ytym-form').addEventListener('submit', handleFormSubmit);
-  document.getElementById('modify-save-btn').addEventListener('click', saveModifiedEvent);
-  document.getElementById('modify-cancel-btn').addEventListener('click', closeModifyModal);
-  await loadEvents();
-});
+  let image_urls = [];
+  for (const file of files) {
+    const { data, error } = await supabase.storage.from('media').upload(`ytym/${Date.now()}_${file.name}`, file);
+    if (error) console.error('アップロード失敗:', error);
+    else image_urls.push(`${supabaseUrl}/storage/v1/object/public/media/${data.path}`);
+  }
 
-async function handleFormSubmit(e) {
-  e.preventDefault();
-  const date = document.getElementById('ytym-date').value;
-  const title = document.getElementById('ytym-title').value;
-  const details = document.getElementById('ytym-details').value;
-  const file = document.getElementById('event-image').files[0];
+  const entry = { date, title, description, image_urls };
+  let result;
 
-  let fileUrl = '';
-  if (file) {
-    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-    const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
-    if (error) {
-      alert('アップロード失敗: ' + error.message);
-      return;
-    }
-    fileUrl = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
-  }
+  if (currentEditId) {
+    const original = ytymEvents.find(e => e.id === currentEditId);
+    if (original.image_urls) entry.image_urls = original.image_urls.concat(image_urls);
+    result = await supabase.from('ytym').update(entry).eq('id', currentEditId);
+    currentEditId = null;
+  } else {
+    result = await supabase.from('ytym').insert([entry]);
+  }
 
-  const { error: insertError } = await supabase.from('ytym').insert([{ date, title, details, file_url: fileUrl }]);
-  if (insertError) {
-    alert('登録失敗: ' + insertError.message);
-    return;
-  }
-
-  document.getElementById('ytym-form').reset();
-  await loadEvents();
+  if (result.error) return console.error('保存エラー:', result.error);
+  clearForm();
+  loadYtym();
 }
 
-async function loadEvents() {
-  const { data, error } = await supabase.from('ytym').select('*').order('date', { ascending: true });
-  if (error) {
-    alert('イベント読み込み失敗: ' + error.message);
-    return;
-  }
-  ytymEvents = data;
-  renderDots();
+// 編集
+function editYtym(id) {
+  const event = ytymEvents.find(e => e.id === id);
+  if (!event) return;
+  document.getElementById('date').value = event.date;
+  document.getElementById('title').value = event.title;
+  document.getElementById('description').value = event.description;
+  document.getElementById('image').value = '';
+  currentEditId = id;
 }
 
-function renderDots() {
-  for (let m = 1; m <= 12; m++) {
-    const grid = document.getElementById(`month-${m}`);
-    if (!grid) continue;
-    grid.innerHTML = '';
-
-    const events = ytymEvents.filter(ev => new Date(ev.date).getMonth() + 1 === m);
-    const byDay = {};
-    events.forEach(ev => {
-      const day = new Date(ev.date).getDate();
-      if (!byDay[day]) byDay[day] = [];
-      byDay[day].push(ev);
-    });
-
-    for (const [day, list] of Object.entries(byDay)) {
-      list.forEach((ev, i) => {
-        const dot = document.createElement('div');
-        dot.className = 'event-dot';
-        dot.style.position = 'absolute';
-        dot.style.left = `${((day - 1) % 10) * 14 + i * 4}px`;
-        dot.style.top = `${Math.floor((day - 1) / 10) * 14}px`;
-        dot.addEventListener('click', (e) => {
-          e.stopPropagation();
-          showTooltip(ev.date);
-        });
-        grid.appendChild(dot);
-      });
-    }
-  }
+// 削除
+async function deleteYtym(id) {
+  if (!confirm('本当に削除しますか？')) return;
+  const { error } = await supabase.from('ytym').delete().eq('id', id);
+  if (error) return console.error('削除エラー:', error);
+  loadYtym();
 }
 
-function showTooltip(dateStr) {
-  const tooltip = document.getElementById('tooltip');
-  const list = ytymEvents.filter(ev => ev.date === dateStr);
-  tooltip.innerHTML = list.map(ev => `
-    <div class="tooltip-content">
-      <strong>${ev.title}</strong><br>
-      <small>${ev.date}</small><br>
-      <p>${ev.details}</p>
-      ${ev.file_url ?
-        ev.file_url.match(/\.(mp4|webm)$/i) ?
-        `<video src="${ev.file_url}" controls style="width:100%;border-radius:6px;"></video>` :
-        `<img src="${ev.file_url}" style="width:100%;border-radius:6px;">`
-      : ''}
-      <button onclick="editEvent(${ev.id})">編集</button>
-      <button onclick="deleteEvent(${ev.id})">削除</button>
-    </div>
-  `).join('');
-  tooltip.style.display = 'block';
+function clearForm() {
+  document.getElementById('date').value = '';
+  document.getElementById('title').value = '';
+  document.getElementById('description').value = '';
+  document.getElementById('image').value = '';
 }
 
-document.addEventListener('click', (e) => {
-  const tooltip = document.getElementById('tooltip');
-  const isTooltip = e.target.closest('.tooltip-content');
-  const isDot = e.target.closest('.event-dot');
-  const isModal = e.target.closest('#modify-modal');
-  if (!isTooltip && !isDot && !isModal) {
-    tooltip.style.display = 'none';
-  }
-});
-
-function editEvent(id) {
-  const ev = ytymEvents.find(e => e.id === id);
-  if (!ev) return;
-  document.getElementById('modify-date').value = ev.date;
-  document.getElementById('modify-title').value = ev.title;
-  document.getElementById('modify-details').value = ev.details;
-  currentEditId = id;
-  document.getElementById('modify-modal').style.display = 'block';
-}
-
-async function saveModifiedEvent() {
-  if (!currentEditId) return;
-  const date = document.getElementById('modify-date').value;
-  const title = document.getElementById('modify-title').value;
-  const details = document.getElementById('modify-details').value;
-  const file = document.getElementById('modify-image').files[0];
-  let fileUrl = '';
-  if (file) {
-    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-    const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
-    if (error) {
-      alert('ファイル更新失敗: ' + error.message);
-      return;
-    }
-    fileUrl = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
-  }
-  const updateObj = { date, title, details };
-  if (fileUrl) updateObj.file_url = fileUrl;
-  const { error } = await supabase.from('ytym').update(updateObj).eq('id', currentEditId);
-  if (error) {
-    alert('更新失敗: ' + error.message);
-    return;
-  }
-  document.getElementById('modify-modal').style.display = 'none';
-  document.getElementById('tooltip').style.display = 'none';
-  await loadEvents();
-}
-
-async function deleteEvent(id) {
-  const { error } = await supabase.from('ytym').delete().eq('id', id);
-  if (error) {
-    alert('削除失敗: ' + error.message);
-    return;
-  }
-  document.getElementById('tooltip').style.display = 'none';
-  await loadEvents();
-}
-
-function closeModifyModal() {
-  document.getElementById('modify-modal').style.display = 'none';
-  currentEditId = null;
-}
+document.getElementById('save-btn').addEventListener('click', saveYtym);
+window.onload = loadYtym;
