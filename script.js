@@ -1,4 +1,4 @@
-// script.js（改善後）
+// script.js（完全修正）
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
@@ -8,32 +8,49 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 let ytymEvents = [];
 let currentEditId = null;
 
-// 投稿取得と表示
+// 月名（日本語）
+const monthNames = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+
+// カレンダー作成
+function createMonthBoxes() {
+  const container = document.getElementById('calendar');
+  container.innerHTML = '';
+  for (let i = 0; i < 12; i++) {
+    const box = document.createElement('div');
+    box.className = 'month-box';
+    box.dataset.month = i + 1;
+    box.innerHTML = `<div class="month-title">${monthNames[i]}</div>`;
+    container.appendChild(box);
+  }
+}
+
+// ytym読み込み
 async function loadYtym() {
   const { data, error } = await supabase.from('ytym').select('*').order('date');
   if (error) return console.error('読み込みエラー:', error);
   ytymEvents = data;
-  renderYtym();
+  renderDots();
 }
 
-function renderYtym() {
-  const container = document.getElementById('ytym-list');
-  container.innerHTML = '';
+function renderDots() {
+  document.querySelectorAll('.month-box').forEach(box => box.querySelectorAll('.dot').forEach(dot => dot.remove()));
   ytymEvents.forEach(event => {
-    const div = document.createElement('div');
-    div.className = 'event';
-    div.innerHTML = `
-      <p><strong>${event.date}</strong>: ${event.title}</p>
-      <p>${event.description}</p>
-      ${event.image_urls ? event.image_urls.map(url => `<img src="${url}" width="100">`).join('') : ''}
-      <button onclick="editYtym('${event.id}')">編集</button>
-      <button onclick="deleteYtym('${event.id}')">削除</button>
-    `;
-    container.appendChild(div);
+    const month = parseInt(event.date.slice(4, 6));
+    const day = parseInt(event.date.slice(6, 8));
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.title = event.title;
+    dot.onclick = () => showDetail(event);
+    const box = document.querySelector(`.month-box[data-month='${month}']`);
+    if (box) box.appendChild(dot);
   });
 }
 
-// 新規投稿または編集保存
+function showDetail(event) {
+  alert(`【${event.title}】\n日付: ${event.date}\n${event.description || ''}`);
+  // ここに編集削除UIを後で追加できます
+}
+
 async function saveYtym() {
   const date = document.getElementById('date').value;
   const title = document.getElementById('title').value;
@@ -43,46 +60,16 @@ async function saveYtym() {
   let image_urls = [];
   for (const file of files) {
     const { data, error } = await supabase.storage.from('media').upload(`ytym/${Date.now()}_${file.name}`, file);
-    if (error) console.error('アップロード失敗:', error);
-    else image_urls.push(`${supabaseUrl}/storage/v1/object/public/media/${data.path}`);
+    if (!error) {
+      image_urls.push(`${supabaseUrl}/storage/v1/object/public/media/${data.path}`);
+    } else {
+      console.error('アップロード失敗:', error);
+    }
   }
 
-  let entry;
-  if (currentEditId) {
-    const original = ytymEvents.find(e => e.id === currentEditId);
-    entry = {
-      date,
-      title,
-      description,
-      image_urls: original.image_urls ? original.image_urls.concat(image_urls) : image_urls
-    };
-    await supabase.from('ytym').update(entry).eq('id', currentEditId);
-    currentEditId = null;
-  } else {
-    entry = { date, title, description, image_urls };
-    await supabase.from('ytym').insert([entry]);
-  }
-
+  const entry = { date, title, description, image_urls };
+  await supabase.from('ytym').insert([entry]);
   clearForm();
-  loadYtym();
-}
-
-// 編集
-function editYtym(id) {
-  const event = ytymEvents.find(e => e.id === id);
-  if (!event) return;
-  document.getElementById('date').value = event.date;
-  document.getElementById('title').value = event.title;
-  document.getElementById('description').value = event.description;
-  document.getElementById('image').value = '';
-  currentEditId = id;
-}
-
-// 削除
-async function deleteYtym(id) {
-  if (!confirm('本当に削除しますか？')) return;
-  const { error } = await supabase.from('ytym').delete().eq('id', id);
-  if (error) return console.error('削除エラー:', error);
   loadYtym();
 }
 
@@ -94,4 +81,7 @@ function clearForm() {
 }
 
 document.getElementById('save-btn').addEventListener('click', saveYtym);
-window.onload = loadYtym;
+window.onload = () => {
+  createMonthBoxes();
+  loadYtym();
+};
