@@ -1,3 +1,4 @@
+// script.js
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
@@ -64,8 +65,8 @@ async function handleFormSubmit(e) {
 
   let fileUrl = '';
   if (file) {
-    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-    const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
+    const filename = `${Date.now()}_${file.name.replace(/[^一-龥\w.]/g, '_')}`;
+    const { data, error } = await supabase.storage.from('media').upload(filename, file);
     if (error) {
       alert('アップロード失敗: ' + error.message);
       return;
@@ -86,7 +87,7 @@ async function handleFormSubmit(e) {
 async function loadEvents() {
   const { data, error } = await supabase.from('ytym').select('*').order('date', { ascending: true });
   if (error) {
-    alert('イベント読み込み失敗: ' + error.message);
+    alert('読み込み失敗: ' + error.message);
     return;
   }
   ytymEvents = data;
@@ -114,10 +115,7 @@ function renderDots() {
         dot.style.position = 'absolute';
         dot.style.left = `${((day - 1) % 10) * 14 + i * 4}px`;
         dot.style.top = `${Math.floor((day - 1) / 10) * 14}px`;
-        dot.addEventListener('click', (e) => {
-          e.stopPropagation();
-          showTooltip(ev.date);
-        });
+        dot.addEventListener('click', () => showTooltip(ev.date));
         grid.appendChild(dot);
       });
     }
@@ -146,10 +144,7 @@ function showTooltip(dateStr) {
 
 document.addEventListener('click', (e) => {
   const tooltip = document.getElementById('tooltip');
-  const isTooltip = e.target.closest('.tooltip-content');
-  const isDot = e.target.closest('.event-dot');
-  const isModal = e.target.closest('#modify-modal');
-  if (!isTooltip && !isDot && !isModal) {
+  if (!e.target.closest('.tooltip-content') && !e.target.closest('.event-dot') && !e.target.closest('#modify-modal')) {
     tooltip.style.display = 'none';
   }
 });
@@ -171,28 +166,24 @@ async function saveModifiedEvent() {
   const details = document.getElementById('modify-details').value;
   const file = document.getElementById('modify-image').files[0];
 
-  let fileUrl = '';
+  const prev = ytymEvents.find(e => e.id === currentEditId);
+  let fileUrl = prev?.file_url || '';
+
   if (file) {
-    // 既存画像の削除
-    const prev = ytymEvents.find(e => e.id === currentEditId);
-    if (prev?.file_url) {
-      const oldFile = prev.file_url.split('/').pop();
+    if (fileUrl) {
+      const oldFile = fileUrl.split('/').pop();
       await supabase.storage.from('media').remove([oldFile]);
     }
-
-    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
-    const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
+    const filename = `${Date.now()}_${file.name.replace(/[^一-龥\w.]/g, '_')}`;
+    const { data, error } = await supabase.storage.from('media').upload(filename, file);
     if (error) {
-      alert('ファイル更新失敗: ' + error.message);
+      alert('画像アップロード失敗: ' + error.message);
       return;
     }
     fileUrl = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
   }
 
-  const updateObj = { date, title, details };
-  if (fileUrl) updateObj.file_url = fileUrl;
-
-  const { error } = await supabase.from('ytym').update(updateObj).eq('id', currentEditId);
+  const { error } = await supabase.from('ytym').update({ date, title, details, file_url: fileUrl }).eq('id', currentEditId);
   if (error) {
     alert('更新失敗: ' + error.message);
     return;
@@ -206,22 +197,15 @@ async function saveModifiedEvent() {
 async function deleteEvent(id) {
   const ev = ytymEvents.find(e => e.id === id);
   if (!ev) return;
-
-  // Supabase Storage の画像削除
   if (ev.file_url) {
     const filePath = ev.file_url.split('/').pop();
-    const { error: storageError } = await supabase.storage.from('media').remove([filePath]);
-    if (storageError) {
-      console.warn('画像削除失敗:', storageError.message);
-    }
+    await supabase.storage.from('media').remove([filePath]);
   }
-
   const { error } = await supabase.from('ytym').delete().eq('id', id);
   if (error) {
     alert('削除失敗: ' + error.message);
     return;
   }
-
   document.getElementById('tooltip').style.display = 'none';
   await loadEvents();
 }
