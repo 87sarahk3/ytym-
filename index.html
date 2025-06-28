@@ -24,6 +24,7 @@
       <option value="all">すべての年</option>
     </select>
     <input type="text" id="search-input" placeholder="検索キーワード" />
+    <button id="search-button">検索</button>
   </div>
 
   <div class="calendar-wrapper">
@@ -32,13 +33,20 @@
 
   <div id="modify-modal" style="display: none">
     <h3>イベント修正</h3>
-    <input type="date" id="modify-date" />
-    <input type="text" id="modify-title" />
-    <textarea id="modify-details"></textarea>
+    <input type="date" id="modify-date" required />
+    <input type="text" id="modify-title" placeholder="タイトル" required />
+    <textarea id="modify-details" placeholder="備考など（任意）"></textarea>
+
+    <div id="modify-current-preview-container">
+      <p>現在の画像・動画:</p>
+      <img id="modify-current-preview" src="" style="max-width:100%; border-radius:6px; display:none;" />
+      <video id="modify-current-video" controls style="width:100%; border-radius:6px; display:none;"></video>
+    </div>
+
     <input type="file" id="modify-image" accept="image/*,video/*" />
     <div id="modify-image-preview-container"></div>
-    <button id="modify-save-btn" onclick="saveModifiedEvent()">保存</button>
-    <button id="modify-cancel-btn" onclick="closeModifyModal()">キャンセル</button>
+    <button id="modify-save-btn">保存</button>
+    <button id="modify-cancel-btn">キャンセル</button>
   </div>
 
   <div class="tooltip" id="tooltip"></div>
