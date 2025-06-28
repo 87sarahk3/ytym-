@@ -3,98 +3,100 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ytym年表</title>
+  <title>YTYMカレンダー</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="style.css">
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #fff6f6;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      margin-top: 30px;
-      font-size: 32px;
+      font-family: 'Meiryo', sans-serif;
+      background: #fff6f6;
       color: #333;
-      text-align: center;
-    }
-    form {
-      margin: 20px;
-      background-color: #fff;
+      margin: 0;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 700px;
     }
-    input, textarea, button {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 14px;
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1em;
+      font-size: 24px;
+    }
+
+    #form-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    #form-section input,
+    #form-section textarea,
+    #form-section button {
+      padding: 8px;
       border: 1px solid #ccc;
       border-radius: 8px;
+      font-size: 14px;
     }
-    #save-btn {
+
+    #form-section button {
       background: #f9a9b8;
       color: white;
       cursor: pointer;
     }
-    .calendar-container {
+
+    #calendar {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 10px;
-      padding: 10px;
-      width: 95%;
     }
+
     .month-box {
-      background-color: #fff;
+      background: #fff;
+      border: 1px solid #ccc;
       border-radius: 12px;
       padding: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      min-height: 120px;
       position: relative;
-      min-height: 100px;
     }
+
     .month-title {
       font-weight: bold;
-      color: #f9a9b8;
+      margin-bottom: 5px;
       text-align: center;
-      margin-bottom: 8px;
     }
+
     .dot {
-      width: 8px;
-      height: 8px;
-      background-color: #f77;
+      width: 12px;
+      height: 12px;
+      background: #f99;
       border-radius: 50%;
-      margin: 2px;
       display: inline-block;
-      animation: popIn 0.3s ease;
+      margin: 2px;
+      transition: transform 0.2s ease;
     }
-    @keyframes popIn {
-      from { transform: scale(0); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+
+    .dot:hover {
+      transform: scale(1.4);
     }
+
     @media (max-width: 768px) {
-      .calendar-container {
+      #calendar {
         grid-template-columns: repeat(3, 1fr);
       }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-  <h1>ytym年表</h1>
-  <form id="form">
-    <input type="text" id="date" placeholder="日付 (例: 20240810)" required pattern="\d{8}">
-    <input type="text" id="title" placeholder="タイトル" required>
-    <textarea id="description" placeholder="詳細"></textarea>
+  <h1>YTYMカレンダー</h1>
+  <div id="form-section">
+    <input type="text" id="date" placeholder="例: 20250101">
+    <input type="text" id="title" placeholder="タイトル">
+    <textarea id="description" placeholder="備考"></textarea>
     <input type="file" id="image" multiple>
-    <button type="button" id="save-btn">保存</button>
-  </form>
+    <button id="save-btn">追加</button>
+  </div>
 
-  <div class="calendar-container" id="calendar"></div>
+  <div id="calendar"></div>
 
   <script src="script.js"></script>
 </body>
