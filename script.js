@@ -65,7 +65,7 @@ async function handleFormSubmit(e) {
 
   let fileUrl = '';
   if (file) {
-    const filename = `${Date.now()}_${file.name.replace(/[^一-龥\w.]/g, '_')}`;
+    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
     const { data, error } = await supabase.storage.from('media').upload(filename, file);
     if (error) {
       alert('アップロード失敗: ' + error.message);
@@ -155,6 +155,22 @@ function editEvent(id) {
   document.getElementById('modify-date').value = ev.date;
   document.getElementById('modify-title').value = ev.title;
   document.getElementById('modify-details').value = ev.details;
+
+  const img = document.getElementById('modify-current-preview');
+  const vid = document.getElementById('modify-current-video');
+  img.style.display = 'none';
+  vid.style.display = 'none';
+
+  if (ev.file_url) {
+    if (ev.file_url.match(/\.(mp4|webm)$/i)) {
+      vid.src = ev.file_url;
+      vid.style.display = 'block';
+    } else {
+      img.src = ev.file_url;
+      img.style.display = 'block';
+    }
+  }
+
   currentEditId = id;
   document.getElementById('modify-modal').style.display = 'block';
 }
@@ -174,7 +190,7 @@ async function saveModifiedEvent() {
       const oldFile = fileUrl.split('/').pop();
       await supabase.storage.from('media').remove([oldFile]);
     }
-    const filename = `${Date.now()}_${file.name.replace(/[^一-龥\w.]/g, '_')}`;
+    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
     const { data, error } = await supabase.storage.from('media').upload(filename, file);
     if (error) {
       alert('画像アップロード失敗: ' + error.message);
