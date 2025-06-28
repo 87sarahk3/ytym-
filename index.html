@@ -1,102 +1,30 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>YTYMカレンダー</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body {
-      font-family: 'Meiryo', sans-serif;
-      background: #fff6f6;
-      color: #333;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 1em;
-      font-size: 24px;
-    }
-
-    #form-section {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-
-    #form-section input,
-    #form-section textarea,
-    #form-section button {
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    #form-section button {
-      background: #f9a9b8;
-      color: white;
-      cursor: pointer;
-    }
-
-    #calendar {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 10px;
-    }
-
-    .month-box {
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      padding: 10px;
-      min-height: 120px;
-      position: relative;
-    }
-
-    .month-title {
-      font-weight: bold;
-      margin-bottom: 5px;
-      text-align: center;
-    }
-
-    .dot {
-      width: 12px;
-      height: 12px;
-      background: #f99;
-      border-radius: 50%;
-      display: inline-block;
-      margin: 2px;
-      transition: transform 0.2s ease;
-    }
-
-    .dot:hover {
-      transform: scale(1.4);
-    }
-
-    @media (max-width: 768px) {
-      #calendar {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-  </style>
 </head>
 <body>
   <h1>YTYMカレンダー</h1>
-  <div id="form-section">
-    <input type="text" id="date" placeholder="例: 20250101">
-    <input type="text" id="title" placeholder="タイトル">
+
+  <div id="ytym-form">
+    <input type="date" id="date" />
+    <input type="text" id="title" placeholder="題名" />
     <textarea id="description" placeholder="備考"></textarea>
-    <input type="file" id="image" multiple>
-    <button id="save-btn">追加</button>
+    <input type="file" id="image" multiple />
+    <button id="save-btn">保存</button>
   </div>
 
-  <div id="calendar"></div>
+  <div class="calendar-wrapper">
+    <div class="calendar-container" id="calendar"></div>
+  </div>
+
+  <div id="detail-overlay" onclick="closeDetails()">
+    <div id="detail-container" onclick="event.stopPropagation()"></div>
+  </div>
 
   <script src="script.js"></script>
 </body>
