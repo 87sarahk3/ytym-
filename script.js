@@ -1,5 +1,3 @@
-// script.js - 最新全体コード（2025年6月29日修正）
-
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
@@ -9,114 +7,202 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 let ytymEvents = [];
 let currentEditId = null;
 
-async function loadYtym() {
-  const { data, error } = await supabase.from('ytym').select('*').order('date');
-  if (error) return console.error('読み込みエラー:', error);
-  ytymEvents = data;
-  renderCalendar();
+function createMonthBoxes() {
+  const container = document.getElementById('calContainer');
+  container.innerHTML = '';
+  for (let m = 1; m <= 12; m++) {
+    const box = document.createElement('div');
+    box.className = 'month-box';
+
+    const title = document.createElement('div');
+    title.className = 'month-title';
+    title.textContent = `${m}月`;
+
+    const grid = document.createElement('div');
+    grid.className = 'dot-grid';
+    grid.id = `month-${m}`;
+    grid.style.position = 'relative';
+
+    box.appendChild(title);
+    box.appendChild(grid);
+    container.appendChild(box);
+  }
+
+  adjustMonthBoxSize();
 }
 
-function renderCalendar() {
-  const container = document.getElementById('calendar-container');
-  container.innerHTML = '';
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  months.forEach(month => {
-    const box = document.createElement('div');
-    box.className = 'month-box';
-
-    const title = document.createElement('div');
-    title.className = 'month-title';
-    title.textContent = `${month}月`;
-
-    const dotArea = document.createElement('div');
-    dotArea.className = 'dot-container';
-
-    const filtered = ytymEvents.filter(e => new Date(e.date).getMonth() + 1 === month);
-    filtered.forEach(event => {
-      const dot = document.createElement('div');
-      dot.className = 'dot';
-      dot.title = `${event.date}: ${event.title}`;
-      dot.onclick = () => showDetails(event.date);
-      dotArea.appendChild(dot);
-    });
-
-    box.appendChild(title);
-    box.appendChild(dotArea);
-    container.appendChild(box);
-  });
+function adjustMonthBoxSize() {
+  const isMobile = window.innerWidth <= 768;
+  const boxes = document.querySelectorAll('.month-box');
+  boxes.forEach(box => {
+    if (isMobile) {
+      box.style.width = '';
+      box.style.height = '';
+    } else {
+      box.style.width = '150px';
+      box.style.height = '150px';
+    }
+  });
 }
 
-function showDetails(date) {
-  const overlay = document.getElementById('detail-overlay');
-  const detailContainer = document.getElementById('detail-container');
-  detailContainer.innerHTML = '';
+window.addEventListener('resize', adjustMonthBoxSize);
 
-  const events = ytymEvents.filter(e => {
-    const eventDate = new Date(e.date).toISOString().split('T')[0];
-    return eventDate === date;
-  });
+document.addEventListener('DOMContentLoaded', async () => {
+  createMonthBoxes();
+  document.getElementById('ytym-form').addEventListener('submit', handleFormSubmit);
+  document.getElementById('modify-save-btn').addEventListener('click', saveModifiedEvent);
+  document.getElementById('modify-cancel-btn').addEventListener('click', closeModifyModal);
+  await loadEvents();
+});
 
-  events.forEach(e => {
-    const block = document.createElement('div');
-    block.className = 'detail-block';
-    block.innerHTML = `
-      <p><strong>${e.date}</strong>: ${e.title}</p>
-      <p>${e.details || ''}</p>
-    `;
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  const date = document.getElementById('ytym-date').value;
+  const title = document.getElementById('ytym-title').value;
+  const details = document.getElementById('ytym-details').value;
+  const file = document.getElementById('event-image').files[0];
 
-    const urls = Array.isArray(e.file_url) ? e.file_url : (e.file_url ? [e.file_url] : []);
-    urls.forEach(url => {
-      if (url.endsWith('.mp4')) {
-        const video = document.createElement('video');
-        video.src = url;
-        video.controls = true;
-        video.style.maxWidth = '100%';
-        block.appendChild(video);
-      } else {
-        const img = document.createElement('img');
-        img.src = url;
-        img.style.maxWidth = '100%';
-        img.style.borderRadius = '8px';
-        block.appendChild(img);
-      }
-    });
+  let fileUrl = '';
+  if (file) {
+    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
+    const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
+    if (error) {
+      alert('アップロード失敗: ' + error.message);
+      return;
+    }
+    fileUrl = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
+  }
 
-    detailContainer.appendChild(block);
-  });
+  const { error: insertError } = await supabase.from('ytym').insert([{ date, title, details, file_url: fileUrl }]);
+  if (insertError) {
+    alert('登録失敗: ' + insertError.message);
+    return;
+  }
 
-  overlay.style.display = 'flex';
-  overlay.onclick = () => (overlay.style.display = 'none');
+  document.getElementById('ytym-form').reset();
+  await loadEvents();
 }
 
-async function saveYtym() {
-  const date = document.getElementById('date').value;
-  const title = document.getElementById('title').value;
-  const details = document.getElementById('description').value;
-  const files = document.getElementById('image').files;
-
-  let file_url = null;
-  for (const file of files) {
-    const { data, error } = await supabase.storage.from('media').upload(`ytym/${Date.now()}_${file.name}`, file);
-    if (!error) {
-      file_url = `${supabaseUrl}/storage/v1/object/public/media/${data.path}`;
-    } else {
-      console.error('アップロード失敗:', error);
-    }
-  }
-
-  const entry = { date, title, details, file_url };
-  await supabase.from('ytym').insert([entry]);
-
-  clearForm();
-  loadYtym();
+async function loadEvents() {
+  const { data, error } = await supabase.from('ytym').select('*').order('date', { ascending: true });
+  if (error) {
+    alert('イベント読み込み失敗: ' + error.message);
+    return;
+  }
+  ytymEvents = data;
+  renderDots();
 }
 
-function clearForm() {
-  document.getElementById('date').value = '';
-  document.getElementById('title').value = '';
-  document.getElementById('description').value = '';
-  document.getElementById('image').value = '';
+function renderDots() {
+  for (let m = 1; m <= 12; m++) {
+    const grid = document.getElementById(`month-${m}`);
+    if (!grid) continue;
+    grid.innerHTML = '';
+
+    const events = ytymEvents.filter(ev => new Date(ev.date).getMonth() + 1 === m);
+    const byDay = {};
+    events.forEach(ev => {
+      const day = new Date(ev.date).getDate();
+      if (!byDay[day]) byDay[day] = [];
+      byDay[day].push(ev);
+    });
+
+    for (const [day, list] of Object.entries(byDay)) {
+      list.forEach((ev, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'event-dot';
+        dot.style.position = 'absolute';
+        dot.style.left = `${((day - 1) % 10) * 14 + i * 4}px`;
+        dot.style.top = `${Math.floor((day - 1) / 10) * 14}px`;
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showTooltip(ev.date);
+        });
+        grid.appendChild(dot);
+      });
+    }
+  }
 }
 
-document.getElementById('save-btn').addEventListener('click', saveYtym);
-window.onload = loadYtym;
+function showTooltip(dateStr) {
+  const tooltip = document.getElementById('tooltip');
+  const list = ytymEvents.filter(ev => ev.date === dateStr);
+  tooltip.innerHTML = list.map(ev => `
+    <div class="tooltip-content">
+      <strong>${ev.title}</strong><br>
+      <small>${ev.date}</small><br>
+      <p>${ev.details}</p>
+      ${ev.file_url ?
+        ev.file_url.match(/\.(mp4|webm)$/i) ?
+        `<video src="${ev.file_url}" controls style="width:100%;border-radius:6px;"></video>` :
+        `<img src="${ev.file_url}" style="width:100%;border-radius:6px;">`
+      : ''}
+      <button onclick="editEvent(${ev.id})">編集</button>
+      <button onclick="deleteEvent(${ev.id})">削除</button>
+    </div>
+  `).join('');
+  tooltip.style.display = 'block';
+}
+
+document.addEventListener('click', (e) => {
+  const tooltip = document.getElementById('tooltip');
+  const isTooltip = e.target.closest('.tooltip-content');
+  const isDot = e.target.closest('.event-dot');
+  const isModal = e.target.closest('#modify-modal');
+  if (!isTooltip && !isDot && !isModal) {
+    tooltip.style.display = 'none';
+  }
+});
+
+function editEvent(id) {
+  const ev = ytymEvents.find(e => e.id === id);
+  if (!ev) return;
+  document.getElementById('modify-date').value = ev.date;
+  document.getElementById('modify-title').value = ev.title;
+  document.getElementById('modify-details').value = ev.details;
+  currentEditId = id;
+  document.getElementById('modify-modal').style.display = 'block';
+}
+
+async function saveModifiedEvent() {
+  if (!currentEditId) return;
+  const date = document.getElementById('modify-date').value;
+  const title = document.getElementById('modify-title').value;
+  const details = document.getElementById('modify-details').value;
+  const file = document.getElementById('modify-image').files[0];
+  let fileUrl = '';
+  if (file) {
+    const filename = `${Date.now()}_${file.name.replace(/[^\w.]/g, '_')}`;
+    const { data, error } = await supabase.storage.from('media').upload(filename, file, { upsert: true });
+    if (error) {
+      alert('ファイル更新失敗: ' + error.message);
+      return;
+    }
+    fileUrl = supabase.storage.from('media').getPublicUrl(filename).data.publicUrl;
+  }
+  const updateObj = { date, title, details };
+  if (fileUrl) updateObj.file_url = fileUrl;
+  const { error } = await supabase.from('ytym').update(updateObj).eq('id', currentEditId);
+  if (error) {
+    alert('更新失敗: ' + error.message);
+    return;
+  }
+  document.getElementById('modify-modal').style.display = 'none';
+  document.getElementById('tooltip').style.display = 'none';
+  await loadEvents();
+}
+
+async function deleteEvent(id) {
+  const { error } = await supabase.from('ytym').delete().eq('id', id);
+  if (error) {
+    alert('削除失敗: ' + error.message);
+    return;
+  }
+  document.getElementById('tooltip').style.display = 'none';
+  await loadEvents();
+}
+
+function closeModifyModal() {
+  document.getElementById('modify-modal').style.display = 'none';
+  currentEditId = null;
+}
