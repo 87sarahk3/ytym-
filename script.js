@@ -47,19 +47,22 @@ async function saveYtym() {
     else image_urls.push(`${supabaseUrl}/storage/v1/object/public/media/${data.path}`);
   }
 
-  const entry = { date, title, description, image_urls };
-  let result;
-
+  let entry;
   if (currentEditId) {
     const original = ytymEvents.find(e => e.id === currentEditId);
-    if (original.image_urls) entry.image_urls = original.image_urls.concat(image_urls);
-    result = await supabase.from('ytym').update(entry).eq('id', currentEditId);
+    entry = {
+      date,
+      title,
+      description,
+      image_urls: original.image_urls ? original.image_urls.concat(image_urls) : image_urls
+    };
+    await supabase.from('ytym').update(entry).eq('id', currentEditId);
     currentEditId = null;
   } else {
-    result = await supabase.from('ytym').insert([entry]);
+    entry = { date, title, description, image_urls };
+    await supabase.from('ytym').insert([entry]);
   }
 
-  if (result.error) return console.error('保存エラー:', result.error);
   clearForm();
   loadYtym();
 }
