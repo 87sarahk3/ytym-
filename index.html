@@ -1,91 +1,134 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ytym年表</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
       margin: 0;
-      padding: 0;
-      background-color: #fff6f6;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      margin-top: 30px;
-      font-size: 32px;
-      color: #333;
-      text-align: center;
-    }
-    form {
-      margin: 20px;
-      background-color: #fff;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 700px;
+      background: #fff6f6;
+      color: #333;
     }
-    input, textarea, button {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 14px;
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1em;
+      font-size: 24px;
+    }
+
+    #ytym-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    #ytym-form input,
+    #ytym-form textarea,
+    #ytym-form button {
+      padding: 8px;
       border: 1px solid #ccc;
       border-radius: 8px;
+      font-size: 14px;
     }
-    #save-btn {
+
+    #ytym-form button {
       background: #f9a9b8;
       color: white;
       cursor: pointer;
     }
-    .event {
-      background-color: #fff;
-      padding: 10px;
-      margin: 10px;
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+    .calendar-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
     }
-    img {
-      max-width: 100px;
-      margin: 5px;
-      display: inline-block;
-    }
-    #ytym-list {
+
+    .calendar {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 10px;
-      padding: 10px;
-      width: 95%;
+      width: 100%;
+      max-width: 800px;
     }
+
     @media (max-width: 768px) {
-      #ytym-list {
+      .calendar {
         grid-template-columns: repeat(3, 1fr);
       }
     }
-    @media (max-width: 480px) {
-      #ytym-list {
-        grid-template-columns: repeat(3, 1fr);
-      }
+
+    .month {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      font-weight: bold;
+      color: #f08080;
+    }
+
+    .dot {
+      height: 8px;
+      width: 8px;
+      background-color: #f08080;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 2px;
+    }
+
+    .event-image {
+      max-width: 100px;
+      margin: 5px;
+    }
+
+    .event-buttons button {
+      margin: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .edit-btn {
+      background-color: #ffd966;
+    }
+
+    .delete-btn {
+      background-color: #ff9999;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   <h1>ytym年表</h1>
-
-  <form id="form">
-    <input type="text" id="date" placeholder="日付 (例: 20240810)" required pattern="\d{8}">
-    <input type="text" id="title" placeholder="タイトル" required>
-    <textarea id="description" placeholder="詳細"></textarea>
-    <input type="file" id="image" multiple>
-    <button type="button" id="save-btn">保存</button>
+  <form id="ytym-form">
+    <input type="text" id="date" placeholder="年/月/日" required />
+    <input type="text" id="title" placeholder="タイトル" required />
+    <textarea id="description" placeholder="備考など（任意）"></textarea>
+    <input type="file" id="image" accept="image/*" multiple />
+    <button type="button" id="addBtn">追加</button>
   </form>
 
-  <div id="ytym-list"></div>
+  <div class="calendar-wrapper">
+    <div class="calendar" id="calContainer"></div>
+  </div>
+
+  <div style="text-align: center; margin-bottom: 10px;">
+    <select id="yearFilter">
+      <option value="">すべての年</option>
+    </select>
+    <input type="text" id="searchInput" placeholder="検索キーワード" />
+    <button onclick="searchEvents()">検索</button>
+  </div>
+
+  <div id="eventDetails" style="padding: 0 20px;"></div>
+
   <script src="script.js"></script>
 </body>
 </html>
