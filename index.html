@@ -2,55 +2,117 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ytym年表</title>
+  <style>
+    body {
+      font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #fff6f6;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1em;
+      font-size: 24px;
+    }
+
+    #ytym-form {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #ytym-form input,
+    #ytym-form textarea,
+    #ytym-form button {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    #save-btn {
+      background: #f9a9b8;
+      color: white;
+      cursor: pointer;
+    }
+
+    .calendar-wrapper {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .month-box {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 20px;
+      color: #f88da0;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    @media screen and (min-width: 768px) {
+      .calendar-wrapper {
+        grid-template-columns: repeat(6, 1fr);
+      }
+    }
+
+    .event {
+      margin-bottom: 20px;
+    }
+
+    img {
+      max-width: 100px;
+      margin: 4px;
+    }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>ytym年表</h1>
 
+  <button onclick="document.getElementById('ytym-form').style.display='flex'">追加</button>
+
+  <div>
+    <select id="year-filter">
+      <option value="">すべての年</option>
+    </select>
+    <input type="text" id="search" placeholder="検索キーワード" />
+  </div>
+
   <form id="ytym-form">
-    <input type="date" id="ytym-date" required />
-    <input type="text" id="ytym-title" placeholder="タイトル" required />
-    <textarea id="ytym-details" placeholder="備考など（任意）"></textarea>
-    <input type="file" id="event-image" accept="image/*,video/*" />
-    <div id="image-preview-container"></div>
-    <button type="submit">追加</button>
+    <input type="date" id="date" required />
+    <input type="text" id="title" placeholder="タイトル" required />
+    <textarea id="description" placeholder="説明"></textarea>
+    <input type="file" id="image" accept="image/*" multiple />
+    <button type="button" id="save-btn">保存</button>
   </form>
 
-  <div id="control-panel">
-    <select id="yearFilter">
-      <option value="all">すべての年</option>
-    </select>
-    <input type="text" id="search-input" placeholder="検索キーワード" />
-    <button id="search-button">検索</button>
-  </div>
-
   <div class="calendar-wrapper">
-    <div class="calendar-container" id="calContainer"></div>
+    <div class="month-box">1月</div>
+    <div class="month-box">2月</div>
+    <div class="month-box">3月</div>
+    <div class="month-box">4月</div>
+    <div class="month-box">5月</div>
+    <div class="month-box">6月</div>
+    <div class="month-box">7月</div>
+    <div class="month-box">8月</div>
+    <div class="month-box">9月</div>
+    <div class="month-box">10月</div>
+    <div class="month-box">11月</div>
+    <div class="month-box">12月</div>
   </div>
 
-  <div id="modify-modal" style="display: none">
-    <h3>イベント修正</h3>
-    <input type="date" id="modify-date" required />
-    <input type="text" id="modify-title" placeholder="タイトル" required />
-    <textarea id="modify-details" placeholder="備考など（任意）"></textarea>
-
-    <div id="modify-current-preview-container">
-      <p>現在の画像・動画:</p>
-      <img id="modify-current-preview" src="" style="max-width:100%; border-radius:6px; display:none;" />
-      <video id="modify-current-video" controls style="width:100%; border-radius:6px; display:none;"></video>
-    </div>
-
-    <input type="file" id="modify-image" accept="image/*,video/*" />
-    <div id="modify-image-preview-container"></div>
-    <button id="modify-save-btn">保存</button>
-    <button id="modify-cancel-btn">キャンセル</button>
-  </div>
-
-  <div class="tooltip" id="tooltip"></div>
-  <div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10;"></div>
+  <div id="ytym-list"></div>
 
   <script src="script.js"></script>
 </body>
