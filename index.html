@@ -1,78 +1,67 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ytym年表</title>
   <style>
     body {
-      font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+      font-family: 'Arial', sans-serif;
       margin: 0;
-      padding: 20px;
-      background: #fff6f6;
-      color: #333;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 1em;
-      font-size: 24px;
-    }
-
-    #ytym-form {
-      display: none;
+      padding: 0;
+      background-color: #f4f4f4;
+      display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
+      align-items: center;
     }
-
-    #ytym-form input,
-    #ytym-form textarea,
-    #ytym-form button {
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+    h1 {
+      margin-top: 30px;
+      font-size: 32px;
+      color: #333;
+      text-align: center;
+    }
+    form {
+      margin: 20px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+    input, textarea, button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
       font-size: 14px;
     }
-
-    #save-btn {
-      background: #f9a9b8;
-      color: white;
-      cursor: pointer;
+    .event {
+      background-color: #fff;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-
-    .calendar-wrapper {
+    img {
+      max-width: 100px;
+      margin: 5px;
+      display: inline-block;
+    }
+    #ytym-list {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      justify-content: center;
-      margin-bottom: 30px;
+      padding: 10px;
+      width: 95%;
     }
-
-    .month-box {
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      font-weight: bold;
-      font-size: 20px;
-      color: #f88da0;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    @media screen and (min-width: 768px) {
-      .calendar-wrapper {
-        grid-template-columns: repeat(6, 1fr);
+    @media (max-width: 768px) {
+      #ytym-list {
+        grid-template-columns: repeat(3, 1fr);
       }
     }
-
-    .event {
-      margin-bottom: 20px;
-    }
-
-    img {
-      max-width: 100px;
-      margin: 4px;
+    @media (max-width: 500px) {
+      #ytym-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -80,40 +69,15 @@
 <body>
   <h1>ytym年表</h1>
 
-  <button onclick="document.getElementById('ytym-form').style.display='flex'">追加</button>
-
-  <div>
-    <select id="year-filter">
-      <option value="">すべての年</option>
-    </select>
-    <input type="text" id="search" placeholder="検索キーワード" />
-  </div>
-
-  <form id="ytym-form">
-    <input type="date" id="date" required />
-    <input type="text" id="title" placeholder="タイトル" required />
-    <textarea id="description" placeholder="説明"></textarea>
-    <input type="file" id="image" accept="image/*" multiple />
+  <form id="form">
+    <input type="text" id="date" placeholder="日付 (例: 20240810)" required pattern="\d{8}">
+    <input type="text" id="title" placeholder="タイトル" required>
+    <textarea id="description" placeholder="詳細"></textarea>
+    <input type="file" id="image" multiple>
     <button type="button" id="save-btn">保存</button>
   </form>
 
-  <div class="calendar-wrapper">
-    <div class="month-box">1月</div>
-    <div class="month-box">2月</div>
-    <div class="month-box">3月</div>
-    <div class="month-box">4月</div>
-    <div class="month-box">5月</div>
-    <div class="month-box">6月</div>
-    <div class="month-box">7月</div>
-    <div class="month-box">8月</div>
-    <div class="month-box">9月</div>
-    <div class="month-box">10月</div>
-    <div class="month-box">11月</div>
-    <div class="month-box">12月</div>
-  </div>
-
   <div id="ytym-list"></div>
-
   <script src="script.js"></script>
 </body>
 </html>
