@@ -1,14 +1,15 @@
-// script.js - 最新全体コード（2025年6月28日対応）
+// script.js - 修正版（「ytym年表」に対応）
 
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuam1kYnV3cHR5c3F3anRvdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwNjgzNTYsImV4cCI6MjA2MzY0NDM1Nn0.Xk4r6cjgirCg7vRVr_K-JHA9xuA_owpzpV98GGOAExI';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let ytymEvents = [];
 let currentEditId = null;
 
+// Supabaseからデータ取得
 async function loadYtym() {
   const { data, error } = await supabase.from('ytym').select('*').order('date');
   if (error) return console.error('読み込みエラー:', error);
@@ -16,40 +17,46 @@ async function loadYtym() {
   renderCalendar();
 }
 
+// カレンダー表示
 function renderCalendar() {
-  const container = document.getElementById('calendar-container');
+  const container = document.getElementById('ytym-calendar');
+  if (!container) {
+    console.error("要素 #ytym-calendar が見つかりません");
+    return;
+  }
   container.innerHTML = '';
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  months.forEach(month => {
-    const box = document.createElement('div');
-    box.className = 'month-box';
+  for (let m = 1; m <= 12; m++) {
+    const monthBox = document.createElement('div');
+    monthBox.className = 'month-box';
 
     const title = document.createElement('div');
     title.className = 'month-title';
-    title.textContent = `${month}月`;
+    title.textContent = `${m}月`;
 
-    const dotArea = document.createElement('div');
-    dotArea.className = 'dot-container';
+    const dotContainer = document.createElement('div');
+    dotContainer.className = 'dot-container';
 
-    const filtered = ytymEvents.filter(e => new Date(e.date).getMonth() + 1 === month);
-    filtered.forEach(event => {
+    const events = ytymEvents.filter(e => new Date(e.date).getMonth() + 1 === m);
+    events.forEach(event => {
       const dot = document.createElement('div');
       dot.className = 'dot';
       dot.title = `${event.date}: ${event.title}`;
       dot.onclick = () => showDetails(event.date);
-      dotArea.appendChild(dot);
+      dotContainer.appendChild(dot);
     });
 
-    box.appendChild(title);
-    box.appendChild(dotArea);
-    container.appendChild(box);
-  });
+    monthBox.appendChild(title);
+    monthBox.appendChild(dotContainer);
+    container.appendChild(monthBox);
+  }
 }
 
+// 詳細表示
 function showDetails(date) {
   const overlay = document.getElementById('detail-overlay');
   const detailContainer = document.getElementById('detail-container');
   detailContainer.innerHTML = '';
+
   const events = ytymEvents.filter(e => e.date === date);
   events.forEach(e => {
     const block = document.createElement('div');
@@ -67,10 +74,12 @@ function showDetails(date) {
     }
     detailContainer.appendChild(block);
   });
+
   overlay.style.display = 'flex';
   overlay.onclick = () => (overlay.style.display = 'none');
 }
 
+// 保存処理
 async function saveYtym() {
   const date = document.getElementById('date').value;
   const title = document.getElementById('title').value;
