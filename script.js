@@ -1,15 +1,12 @@
-// script.js - 修正版（「ytym年表」に対応）
-
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZuam1kYnV3cHR5c3F3anRvdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwNjgzNTYsImV4cCI6MjA2MzY0NDM1Nn0.Xk4r6cjgirCg7vRVr_K-JHA9xuA_owpzpV98GGOAExI';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let ytymEvents = [];
 let currentEditId = null;
 
-// Supabaseからデータ取得
 async function loadYtym() {
   const { data, error } = await supabase.from('ytym').select('*').order('date');
   if (error) return console.error('読み込みエラー:', error);
@@ -17,59 +14,71 @@ async function loadYtym() {
   renderCalendar();
 }
 
-// カレンダー表示
 function renderCalendar() {
-  const container = document.getElementById('ytym-calendar');
-  if (!container) {
-    console.error("要素 #ytym-calendar が見つかりません");
-    return;
-  }
+  const container = document.getElementById('calendar-container');
   container.innerHTML = '';
-  for (let m = 1; m <= 12; m++) {
-    const monthBox = document.createElement('div');
-    monthBox.className = 'month-box';
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  months.forEach(month => {
+    const box = document.createElement('div');
+    box.className = 'month-box';
 
     const title = document.createElement('div');
     title.className = 'month-title';
-    title.textContent = `${m}月`;
+    title.textContent = `${month}月`;
 
-    const dotContainer = document.createElement('div');
-    dotContainer.className = 'dot-container';
+    const dotArea = document.createElement('div');
+    dotArea.className = 'dot-container';
 
-    const events = ytymEvents.filter(e => new Date(e.date).getMonth() + 1 === m);
-    events.forEach(event => {
+    const filtered = ytymEvents.filter(e => {
+      const d = new Date(e.date);
+      return d.getMonth() + 1 === month;
+    });
+
+    filtered.forEach(event => {
       const dot = document.createElement('div');
       dot.className = 'dot';
       dot.title = `${event.date}: ${event.title}`;
       dot.onclick = () => showDetails(event.date);
-      dotContainer.appendChild(dot);
+      dotArea.appendChild(dot);
     });
 
-    monthBox.appendChild(title);
-    monthBox.appendChild(dotContainer);
-    container.appendChild(monthBox);
-  }
+    box.appendChild(title);
+    box.appendChild(dotArea);
+    container.appendChild(box);
+  });
 }
 
-// 詳細表示
 function showDetails(date) {
   const overlay = document.getElementById('detail-overlay');
   const detailContainer = document.getElementById('detail-container');
   detailContainer.innerHTML = '';
 
-  const events = ytymEvents.filter(e => e.date === date);
+  const events = ytymEvents.filter(e => {
+    const eventDate = new Date(e.date).toISOString().split('T')[0];
+    return eventDate === date;
+  });
+
   events.forEach(e => {
     const block = document.createElement('div');
     block.className = 'detail-block';
     block.innerHTML = `
       <p><strong>${e.date}</strong>: ${e.title}</p>
-      <p>${e.description}</p>
+      <p>${e.details || ''}</p>
     `;
-    if (e.image_urls && e.image_urls.length) {
-      e.image_urls.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        block.appendChild(img);
+    if (e.file_url) {
+      const urls = Array.isArray(e.file_url) ? e.file_url : [e.file_url];
+      urls.forEach(url => {
+        if (url.endsWith('.mp4')) {
+          const video = document.createElement('video');
+          video.src = url;
+          video.controls = true;
+          video.style.maxWidth = '100%';
+          block.appendChild(video);
+        } else if (url.endsWith('.gif') || url.endsWith('.jpg') || url.endsWith('.png')) {
+          const img = document.createElement('img');
+          img.src = url;
+          block.appendChild(img);
+        }
       });
     }
     detailContainer.appendChild(block);
@@ -79,35 +88,24 @@ function showDetails(date) {
   overlay.onclick = () => (overlay.style.display = 'none');
 }
 
-// 保存処理
 async function saveYtym() {
   const date = document.getElementById('date').value;
   const title = document.getElementById('title').value;
-  const description = document.getElementById('description').value;
+  const details = document.getElementById('description').value;
   const files = document.getElementById('image').files;
 
-  let image_urls = [];
+  let file_url = null;
   for (const file of files) {
     const { data, error } = await supabase.storage.from('media').upload(`ytym/${Date.now()}_${file.name}`, file);
-    if (error) console.error('アップロード失敗:', error);
-    else image_urls.push(`${supabaseUrl}/storage/v1/object/public/media/${data.path}`);
+    if (!error) {
+      file_url = `${supabaseUrl}/storage/v1/object/public/media/${data.path}`;
+    } else {
+      console.error('アップロード失敗:', error);
+    }
   }
 
-  let entry;
-  if (currentEditId) {
-    const original = ytymEvents.find(e => e.id === currentEditId);
-    entry = {
-      date,
-      title,
-      description,
-      image_urls: original.image_urls ? original.image_urls.concat(image_urls) : image_urls
-    };
-    await supabase.from('ytym').update(entry).eq('id', currentEditId);
-    currentEditId = null;
-  } else {
-    entry = { date, title, description, image_urls };
-    await supabase.from('ytym').insert([entry]);
-  }
+  const entry = { date, title, details, file_url };
+  await supabase.from('ytym').insert([entry]);
 
   clearForm();
   loadYtym();
