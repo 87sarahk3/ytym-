@@ -1,4 +1,5 @@
-// script.js - 最新版（2025年6月28日対応）
+// script.js - 最新全体コード（2025年6月28日対応）
+
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
@@ -6,67 +7,109 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let ytymEvents = [];
+let currentEditId = null;
 
-// 月ボックス生成
-function createMonthBoxes() {
-  const calendar = document.getElementById("calendar");
-  calendar.innerHTML = '';
-  const container = document.createElement("div");
-  container.className = "calendar-container";
-
-  const monthNames = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
-  for (let i = 0; i < 12; i++) {
-    const box = document.createElement("div");
-    box.className = "month-box";
-    box.dataset.month = i + 1;
-    box.innerHTML = `
-      <div class="month-title">${monthNames[i]}</div>
-      <div class="dot-container"></div>
-    `;
-    container.appendChild(box);
-  }
-  calendar.appendChild(container);
-}
-
-// ytymデータ取得
 async function loadYtym() {
-  const { data, error } = await supabase.from("ytym").select("*").order("date");
-  if (error) return console.error("データ取得失敗", error);
+  const { data, error } = await supabase.from('ytym').select('*').order('date');
+  if (error) return console.error('読み込みエラー:', error);
   ytymEvents = data;
-  renderDots();
+  renderCalendar();
 }
 
-// ドット描画
-function renderDots() {
-  const boxes = document.querySelectorAll(".month-box");
-  boxes.forEach(box => {
-    const month = parseInt(box.dataset.month);
-    const container = box.querySelector(".dot-container");
-    container.innerHTML = '';
+function renderCalendar() {
+  const container = document.getElementById('calendar-container');
+  container.innerHTML = '';
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  months.forEach(month => {
+    const box = document.createElement('div');
+    box.className = 'month-box';
 
-    const dots = ytymEvents.filter(e => new Date(e.date).getMonth() + 1 === month);
+    const title = document.createElement('div');
+    title.className = 'month-title';
+    title.textContent = `${month}月`;
 
-    dots.forEach((e, index) => {
-      const dot = document.createElement("div");
-      dot.className = "dot";
-      const day = new Date(e.date).getDate();
-      const row = Math.floor((day - 1) / 10);
-      const col = (day - 1) % 10;
-      dot.style.top = `${row * 12}px`;
-      dot.style.left = `${col * 12}px`;
-      dot.title = `${e.date}\n${e.title}`;
-      dot.addEventListener("click", () => showDetails(e.date));
-      container.appendChild(dot);
+    const dotArea = document.createElement('div');
+    dotArea.className = 'dot-container';
+
+    const filtered = ytymEvents.filter(e => new Date(e.date).getMonth() + 1 === month);
+    filtered.forEach(event => {
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.title = `${event.date}: ${event.title}`;
+      dot.onclick = () => showDetails(event.date);
+      dotArea.appendChild(dot);
     });
+
+    box.appendChild(title);
+    box.appendChild(dotArea);
+    container.appendChild(box);
   });
 }
 
-// 詳細表示（仮）
 function showDetails(date) {
-  alert(`${date} の詳細をここに表示します（今後実装）`);
+  const overlay = document.getElementById('detail-overlay');
+  const detailContainer = document.getElementById('detail-container');
+  detailContainer.innerHTML = '';
+  const events = ytymEvents.filter(e => e.date === date);
+  events.forEach(e => {
+    const block = document.createElement('div');
+    block.className = 'detail-block';
+    block.innerHTML = `
+      <p><strong>${e.date}</strong>: ${e.title}</p>
+      <p>${e.description}</p>
+    `;
+    if (e.image_urls && e.image_urls.length) {
+      e.image_urls.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        block.appendChild(img);
+      });
+    }
+    detailContainer.appendChild(block);
+  });
+  overlay.style.display = 'flex';
+  overlay.onclick = () => (overlay.style.display = 'none');
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  createMonthBoxes();
+async function saveYtym() {
+  const date = document.getElementById('date').value;
+  const title = document.getElementById('title').value;
+  const description = document.getElementById('description').value;
+  const files = document.getElementById('image').files;
+
+  let image_urls = [];
+  for (const file of files) {
+    const { data, error } = await supabase.storage.from('media').upload(`ytym/${Date.now()}_${file.name}`, file);
+    if (error) console.error('アップロード失敗:', error);
+    else image_urls.push(`${supabaseUrl}/storage/v1/object/public/media/${data.path}`);
+  }
+
+  let entry;
+  if (currentEditId) {
+    const original = ytymEvents.find(e => e.id === currentEditId);
+    entry = {
+      date,
+      title,
+      description,
+      image_urls: original.image_urls ? original.image_urls.concat(image_urls) : image_urls
+    };
+    await supabase.from('ytym').update(entry).eq('id', currentEditId);
+    currentEditId = null;
+  } else {
+    entry = { date, title, description, image_urls };
+    await supabase.from('ytym').insert([entry]);
+  }
+
+  clearForm();
   loadYtym();
-});
+}
+
+function clearForm() {
+  document.getElementById('date').value = '';
+  document.getElementById('title').value = '';
+  document.getElementById('description').value = '';
+  document.getElementById('image').value = '';
+}
+
+document.getElementById('save-btn').addEventListener('click', saveYtym);
+window.onload = loadYtym;
