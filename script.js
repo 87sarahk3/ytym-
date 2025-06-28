@@ -1,3 +1,5 @@
+// script.js - 最新全体コード（2025年6月29日修正）
+
 console.log("script.js 読み込まれた");
 
 const supabaseUrl = 'https://fnjmdbuwptysqwjtovzn.supabase.co';
@@ -29,11 +31,7 @@ function renderCalendar() {
     const dotArea = document.createElement('div');
     dotArea.className = 'dot-container';
 
-    const filtered = ytymEvents.filter(e => {
-      const d = new Date(e.date);
-      return d.getMonth() + 1 === month;
-    });
-
+    const filtered = ytymEvents.filter(e => new Date(e.date).getMonth() + 1 === month);
     filtered.forEach(event => {
       const dot = document.createElement('div');
       dot.className = 'dot';
@@ -65,22 +63,24 @@ function showDetails(date) {
       <p><strong>${e.date}</strong>: ${e.title}</p>
       <p>${e.details || ''}</p>
     `;
-    if (e.file_url) {
-      const urls = Array.isArray(e.file_url) ? e.file_url : [e.file_url];
-      urls.forEach(url => {
-        if (url.endsWith('.mp4')) {
-          const video = document.createElement('video');
-          video.src = url;
-          video.controls = true;
-          video.style.maxWidth = '100%';
-          block.appendChild(video);
-        } else if (url.endsWith('.gif') || url.endsWith('.jpg') || url.endsWith('.png')) {
-          const img = document.createElement('img');
-          img.src = url;
-          block.appendChild(img);
-        }
-      });
-    }
+
+    const urls = Array.isArray(e.file_url) ? e.file_url : (e.file_url ? [e.file_url] : []);
+    urls.forEach(url => {
+      if (url.endsWith('.mp4')) {
+        const video = document.createElement('video');
+        video.src = url;
+        video.controls = true;
+        video.style.maxWidth = '100%';
+        block.appendChild(video);
+      } else {
+        const img = document.createElement('img');
+        img.src = url;
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '8px';
+        block.appendChild(img);
+      }
+    });
+
     detailContainer.appendChild(block);
   });
 
